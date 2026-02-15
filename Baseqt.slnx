@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Baseqat.CORE/Baseqat.CORE.csproj" />
+  <Project Path="Baseqat.EF/Baseqat.EF.csproj" />
+  <Project Path="Baseqt.API/Baseqt.API.csproj" />
+</Solution>
