@@ -1,6 +1,7 @@
 ﻿using Baseqat.CORE.DTOs;
 using Baseqat.CORE.Response;
 using Baseqat.CORE.Services;
+using Baseqt.API.Helper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +20,7 @@ namespace Baseqt.API.Controllers
 
         [HttpPost("register")]
         [AllowAnonymous]
+        
         public async Task<ActionResult<ApiBaseResponse<string>>>
            Register([FromBody] RegisterUserDto model)
         {

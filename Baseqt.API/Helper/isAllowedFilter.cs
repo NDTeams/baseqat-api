@@ -68,6 +68,13 @@ namespace Baseqt.API.Helper
                     }; //new UnauthorizedResult();
                     return;
                 }
+
+                // SuperAdmin has all privileges
+                if (roles.Contains("SuperAdmin"))
+                {
+                    return; // Allow access
+                }
+
                 //var roles = this._roles;
                 var prv = db.Privileges.FirstOrDefault(a => a.priv_name == this._privlige);
                 if (prv != null)

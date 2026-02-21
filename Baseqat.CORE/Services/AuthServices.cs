@@ -21,16 +21,19 @@ namespace Baseqat.CORE.Services
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
         private readonly ITokenService _tokenService;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
         public AuthServices(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager
             , IConfiguration configuration,
-            IEmailService emailService, ITokenService tokenService)
+            IEmailService emailService, ITokenService tokenService,
+            RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _configuration = configuration;
             _emailService = emailService;
             _tokenService = tokenService;
             _signInManager = signInManager;
+            _roleManager = roleManager;
 
         }
 
@@ -110,6 +113,24 @@ namespace Baseqat.CORE.Services
                     result.Errors.Select(e => e.Description).ToArray());
             }
 
+            var clientRole = IntitalRoles.Client;
+            if (!await _roleManager.RoleExistsAsync(clientRole))
+            {
+                var createRoleResult = await _roleManager.CreateAsync(new IdentityRole(clientRole));
+                if (!createRoleResult.Succeeded)
+                {
+                    return ApiBaseResponse<string>.Fail(ResponseMessages.OperationFailed,
+                        createRoleResult.Errors.Select(e => e.Description).ToArray());
+                }
+            }
+
+            var addToRoleResult = await _userManager.AddToRoleAsync(user, clientRole);
+            if (!addToRoleResult.Succeeded)
+            {
+                return ApiBaseResponse<string>.Fail(ResponseMessages.OperationFailed,
+                    addToRoleResult.Errors.Select(e => e.Description).ToArray());
+            }
+
 
             if (result.Succeeded)
             {
@@ -126,7 +147,14 @@ namespace Baseqat.CORE.Services
 
                     // 4. إرسال الإيميل
                     var emailBody = EmailTemplates.GetConfirmationEmail(user.UserName, confirmationLink);
-                    await _emailService.SendEmailAsync(new List<string> { user.Email }, "تأكيد البريد الإلكتروني", emailBody);
+                    try
+                    {
+                        await _emailService.SendEmailAsync(new List<string> { user.Email }, "تأكيد البريد الإلكتروني", emailBody);
+                    }
+                    catch
+                    {
+                        return ApiBaseResponse<string>.Success(null, $"{ResponseMessages.EmailConfirmationSent} - {ResponseMessages.EmailNotSent}");
+                    }
                 }
             }
             string ms = ResponseMessages.EmailConfirmationSent;

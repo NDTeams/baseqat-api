@@ -79,6 +79,16 @@ namespace Baseqat.CORE
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
+            var legacyContactPrivilege = db.Privileges.FirstOrDefault(x => x.priv_name == "إدارة طلبات التواصل");
+            if (legacyContactPrivilege != null)
+            {
+                legacyContactPrivilege.priv_name = "إدارة الطلبات";
+                legacyContactPrivilege.priv_cat = IntitalRoles.BaseqatEmployee;
+                legacyContactPrivilege.isEnabled = true;
+                db.Privileges.Update(legacyContactPrivilege);
+                await db.SaveChangesAsync();
+            }
+
             // 1. تعريف الصلاحيات للأقسام الجديدة (مدرب، مستشار، عميل، موظفين)
             var lst = new List<Privileges>
             {
@@ -93,7 +103,8 @@ namespace Baseqat.CORE
                 // صلاحيات العملاء والموظفين
                 new Privileges { priv_name = "طلب خدمة جديدة", isEnabled = true, priv_cat = "Client", priv_key = Guid.NewGuid() },
                 new Privileges { priv_name = "متابعة طلبات العملاء", isEnabled = true, priv_cat = "BaseqatEmployee", priv_key = Guid.NewGuid() },
-                new Privileges { priv_name = "إصدار الشهادات والتقارير", isEnabled = true, priv_cat = "Reports", priv_key = Guid.NewGuid() }
+                new Privileges { priv_name = "إصدار الشهادات والتقارير", isEnabled = true, priv_cat = "Reports", priv_key = Guid.NewGuid() },
+                new Privileges { priv_name = "إدارة الطلبات", isEnabled = true, priv_cat = IntitalRoles.BaseqatEmployee, priv_key = Guid.NewGuid() }
             };
 
             // 2. فحص وإضافة الصلاحيات في جدول Privileges
@@ -152,6 +163,42 @@ namespace Baseqat.CORE
                         await db.SaveChangesAsync();
                     }
                 }
+            }
+
+            var requestPrivilege = db.Privileges.FirstOrDefault(x => x.priv_name == "إدارة الطلبات");
+            if (requestPrivilege != null)
+            {
+                var allowedRoles = new HashSet<string>
+                {
+                    IntitalRoles.SuperAdmin,
+                    IntitalRoles.Admin,
+                    IntitalRoles.BaseqatEmployee
+                };
+
+                foreach (var role in roles)
+                {
+                    var rolePrivilege = db.Privileges_RoleBased.FirstOrDefault(x =>
+                        x.PrivilegesId == requestPrivilege.Id && x.RoleId == role.Id);
+
+                    if (rolePrivilege == null)
+                    {
+                        rolePrivilege = new Privileges_RoleBased
+                        {
+                            PrivilegesId = requestPrivilege.Id,
+                            RoleId = role.Id
+                        };
+                        db.Privileges_RoleBased.Add(rolePrivilege);
+                    }
+
+                    var isAllowedRole = allowedRoles.Contains(role.Name ?? string.Empty);
+                    rolePrivilege.is_displayed = isAllowedRole;
+                    rolePrivilege.is_insert = isAllowedRole;
+                    rolePrivilege.is_update = isAllowedRole;
+                    rolePrivilege.is_delete = isAllowedRole;
+                    rolePrivilege.is_print = isAllowedRole;
+                }
+
+                await db.SaveChangesAsync();
             }
         }
     }

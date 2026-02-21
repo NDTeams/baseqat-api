@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Baseqat.EF.Models
 {
-    public class CourseCategory:AuditableEntity
+    public class CourseCategory:DeleteEntity
     {
         public long Id { get; set; }
 
@@ -16,6 +16,7 @@ namespace Baseqat.EF.Models
         public string Description { get; set; } = string.Empty;
 
         public bool IsActive { get; set; } = true;
+        
 
         public ICollection<Course> Courses { get; set; } = new List<Course>();
     }

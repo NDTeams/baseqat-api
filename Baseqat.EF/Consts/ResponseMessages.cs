@@ -45,6 +45,7 @@ namespace Baseqat.EF.Consts
         public const string ImageSizeExceeded = "يجب ألا يتجاوز حجم الصورة 500 كيلوبايت.";
         public const string PhoneNumberNotConfirmed = "لم يتم تأكيد رقم الجوال";
         public const string EmailSendFailed = "فشل في إرسال البريد الإلكتروني";
+        public const string EmailNotSent = "لم يتم ارسال البريد الإلكتروني";
         public const string EmailNotConfirmed = "لم يتم تأكيد البريد الإلكتروني";
         public const string InvalidOrExpiredVerificationLink = "رابط التحقق غير صالح أو انتهت صلاحيته";
         public const string FileSizeExceeded = "حجم الملف يتجاوز 2 ميجابايت.";

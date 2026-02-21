@@ -1,7 +1,9 @@
 using Baseqat.CORE;
 using Baseqat.CORE.Helpers;
+using Baseqat.EF.DATA;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
@@ -115,6 +117,12 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
 
 await app.Services.SeedDefaultUserAsync();
 await app.Services.SeedDefaultPrivilegesAsync();

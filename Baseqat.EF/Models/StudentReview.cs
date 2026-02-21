@@ -27,6 +27,10 @@ namespace Baseqat.EF.Models
         public string Comment { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        
+
+
     }
 
 }
