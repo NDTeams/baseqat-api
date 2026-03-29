@@ -1,0 +1,49 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/2026/baseqat/app/Basqat-main/**)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(dotnet run:*)",
+      "Bash(npm run dev:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(sqlcmd:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(dotnet ef database update:*)",
+      "Bash(dotnet build:*)",
+      "Bash(for icon in faRocket faGlobe faHandshake faChalkboard faUsers faStar faAward faChartLine faLightbulb faHeart faGraduationCap)",
+      "Bash(do ls \"d:/2026/baseqat/app/Basqat-main/node_modules/@fortawesome/free-solid-svg-icons/$icon.js\")",
+      "Bash(done)",
+      "Bash(find:*)",
+      "Read(//d/2026/baseqat/bas/**)",
+      "Bash(tasklist:*)",
+      "Bash(taskkill:*)",
+      "Bash(dotnet ef migrations remove:*)",
+      "Bash(node -e:*)",
+      "Bash(wc:*)",
+      "Read(//tmp/claude/d--ND-app-Baseqt/tasks/**)",
+      "Bash(npx tsc:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyZDI4ZjUwMS0zYjExLTQzMTEtYTgyMC0wNmY2YjY2MDIzZmUiLCJ1bmlxdWVfbmFtZSI6ImFsLWJheXRpQGhvdG1haWwuY29tIiwianRpIjoiNzgxOWRiMWMtZGQyMS00ZGMxLTliZjctYjVmZWU1MjkxYzRhIiwicm9sZSI6IlN1cGVyQWRtaW4iLCJuYmYiOjE3NzI3MDAzNDksImV4cCI6MTc3MjcwMzk0OSwiaWF0IjoxNzcyNzAwMzQ5LCJpc3MiOiJIdXNCYWl0aSIsImF1ZCI6Ik1DQ0lFbXBsb3llZSJ9.7YOgIP-l62K7aUaDKLg7GuC3P-zatxVBG7YH4dmzKNs\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyZDI4ZjUwMS0zYjExLTQzMTEtYTgyMC0wNmY2YjY2MDIzZmUiLCJ1bmlxdWVfbmFtZSI6ImFsLWJheXRpQGhvdG1haWwuY29tIiwianRpIjoiMWQzMGU5NWYtNjAyNS00ZDIwLThkNDgtMDFhMWQzOWZhYmY0Iiwicm9sZSI6IlN1cGVyQWRtaW4iLCJuYmYiOjE3NzI3MDEwODEsImV4cCI6MTc3MjcwNDY4MSwiaWF0IjoxNzcyNzAxMDgxLCJpc3MiOiJIdXNCYWl0aSIsImF1ZCI6Ik1DQ0lFbXBsb3llZSJ9.lECPqsliMBOPtq8nn6mD4VZq2izEguwmvYI3qiX5JcY\")",
+      "Read(//d/2026/baseqat/baseqtCon/basqat-webb/**)",
+      "Bash(head:*)"
+    ],
+    "additionalDirectories": [
+      "d:\\2026\\baseqat\\app\\Basqat-main\\app\\(dashboard)\\instructors-admin",
+      "d:\\2026\\baseqat\\app\\Basqat-main\\app\\(site)",
+      "d:\\2026\\baseqat\\app\\Basqat-main\\app\\(dashboard)\\consultation-categories",
+      "d:\\2026\\baseqat\\app\\Basqat-main\\components\\dashboard",
+      "d:\\2026\\baseqat\\app\\Basqat-main\\app\\(dashboard)\\consultants-admin",
+      "d:\\2026\\baseqat\\app\\Basqat-main\\app\\actions",
+      "d:\\2026\\baseqat\\app\\Basqat-main\\components\\client-dashboard",
+      "d:\\2026\\baseqat\\app\\Basqat-main\\app\\client-dashboard",
+      "d:\\2026\\baseqat\\app\\Basqat-main\\app\\(dashboard)",
+      "d:\\2026\\baseqat\\app\\Basqat-main\\components\\site",
+      "d:\\2026\\baseqat\\app\\Basqat-main\\app\\(auth)\\login",
+      "d:\\2026\\baseqat\\app\\Basqat-main\\app\\(auth)\\register",
+      "\\tmp"
+    ]
+  }
+}

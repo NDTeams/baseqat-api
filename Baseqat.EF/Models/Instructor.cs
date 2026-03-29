@@ -26,13 +26,13 @@ namespace Baseqat.EF.Models
         public string? InstagramUrl { get; set; }
         public string? FacebookUrl { get; set; }
 
-        // Info update request workflow (stored in same table)
-        public InstructorInfoUpdateRequestStatus? InfoUpdateRequestStatus { get; set; }
-        public string? InfoUpdateSubmittedByUserId { get; set; }
-        public string? InfoUpdateReviewedByUserId { get; set; }
-        public DateTime? InfoUpdateReviewedAt { get; set; }
-        public string? InfoUpdateDenialReason { get; set; }
-        public string? InfoUpdatePayloadJson { get; set; }
+        // Request workflow (stored in same table)
+        public InstructorRequestStatus? RequestStatus { get; set; }
+        public string? SubmittedByUserId { get; set; }
+        public string? ReviewedByUserId { get; set; }
+        public DateTime? ReviewedAt { get; set; }
+        public string? DenialReason { get; set; }
+        public string? PayloadJson { get; set; }
 
         public Gender Gender { get; set; }
         public bool IsActive { get; set; } = true; // حالة التفعيل

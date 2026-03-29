@@ -88,6 +88,14 @@ namespace Baseqat.CORE.DTOs
         public string? XUrl { get; set; }
         public string? InstagramUrl { get; set; }
         public string? FacebookUrl { get; set; }
+
+        public string? SubmittedByUserId { get; set; }
+        public InstructorRequestStatus? RequestStatus { get; set; }
+        public string? RequestStatusName { get; set; }
+        public string? ReviewedByUserId { get; set; }
+        public DateTime? ReviewedAt { get; set; }
+        public string? DenialReason { get; set; }
+        public DateTime? CreatedAt { get; set; }
     }
     #endregion
 
@@ -97,6 +105,32 @@ namespace Baseqat.CORE.DTOs
         public List<InstructorSkillDto> Skills { get; set; } = new();
         public List<CourseDto> Courses { get; set; } = new();
         public List<StudentReviewDto> Reviews { get; set; } = new();
+    }
+    #endregion
+
+    #region Request DTOs
+    public class InstructorRequestCreateDto
+    {
+        public long? InstructorId { get; set; }
+
+        public string? Name { get; set; }
+        public string? Title { get; set; }
+        public string? Bio { get; set; }
+        public Gender? Gender { get; set; }
+        public int? YearsOfExperience { get; set; }
+        public string? LinkedInUrl { get; set; }
+        public string? XUrl { get; set; }
+        public string? InstagramUrl { get; set; }
+        public string? FacebookUrl { get; set; }
+        public List<string>? Skills { get; set; }
+    }
+
+    public class InstructorRequestReviewDto
+    {
+        [Required]
+        public bool Approve { get; set; }
+
+        public string? DenialReason { get; set; }
     }
     #endregion
 

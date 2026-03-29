@@ -8,6 +8,7 @@ using Baseqt.API.Helper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
+using System.Security.Claims;
 
 namespace Baseqt.API.Controllers
 {
@@ -28,13 +29,45 @@ namespace Baseqt.API.Controllers
         [isAllowed("إدارة المدربين", "is_displayed")]
         public async Task<IActionResult> GetAll()
         {
-            var result = await _unitOfWork.InstructorSkill.GetAllAsync();
+            var instructorId = await GetCurrentInstructorIdAsync();
+            if (!instructorId.HasValue)
+                return Ok(ApiBaseResponse<string>.Fail("لا يوجد سجل مدرب مرتبط بالمستخدم الحالي"));
+
+            var result = await _unitOfWork.InstructorSkill.FindAllAsync(
+                criteria: x => x.InstructorId == instructorId.Value,
+                skip: null,
+                take: null,
+                orderBy: x => x.Id,
+                orderByDirection: OrderBy.Descending);
             
             if (result == null || !result.Any())
                 return Ok(ApiBaseResponse<string>.Fail(ResponseMessages.NotFound));
 
             var dtos = result.Select(MapToDto).ToList();
 
+            return Ok(ApiBaseResponse<List<InstructorSkillDto>>.Success(dtos, ResponseMessages.DataRetrieved));
+        }
+        #endregion
+
+        #region 1.1 Get All By InstructorId
+        [HttpGet("ByInstructor/{instructorId}")]
+        [isAllowed("إدارة المدربين", "is_displayed")]
+        public async Task<IActionResult> GetByInstructorId(long instructorId)
+        {
+            var instructor = await _unitOfWork.Instructor.FindAsync(
+                x => x.Id == instructorId && x.IsDeleted != true);
+
+            if (instructor == null)
+                return Ok(ApiBaseResponse<string>.Fail("المدرب غير موجود"));
+
+            var result = await _unitOfWork.InstructorSkill.FindAllAsync(
+                criteria: x => x.InstructorId == instructorId,
+                skip: null,
+                take: null,
+                orderBy: x => x.Id,
+                orderByDirection: OrderBy.Descending);
+
+            var dtos = result?.Select(MapToDto).ToList() ?? new List<InstructorSkillDto>();
             return Ok(ApiBaseResponse<List<InstructorSkillDto>>.Success(dtos, ResponseMessages.DataRetrieved));
         }
         #endregion
@@ -46,9 +79,14 @@ namespace Baseqt.API.Controllers
             [FromQuery] PaginationParams pagination,
             [FromQuery] InstructorSkillFilterDto filter)
         {
+            var instructorId = await GetCurrentInstructorIdAsync();
+            if (!instructorId.HasValue)
+                return Ok(PagedResponse<InstructorSkillDto>.Fail("لا يوجد سجل مدرب مرتبط بالمستخدم الحالي"));
+
             int skip = (pagination.PageNumber - 1) * pagination.PageSize;
 
             Expression<Func<InstructorSkill, bool>> criteria = x =>
+                x.InstructorId == instructorId.Value &&
                 (filter.Id == null || filter.Id == 0 || x.Id == filter.Id) &&
                 (string.IsNullOrEmpty(filter.Name) || x.Name.Contains(filter.Name));
 
@@ -84,9 +122,13 @@ namespace Baseqt.API.Controllers
         [isAllowed("إدارة المدربين", "is_displayed")]
         public async Task<IActionResult> GetByIdAsync(long id)
         {
+            var instructorId = await GetCurrentInstructorIdAsync();
+            if (!instructorId.HasValue)
+                return Ok(ApiBaseResponse<string>.Fail("لا يوجد سجل مدرب مرتبط بالمستخدم الحالي"));
+
             var entity = await _unitOfWork.InstructorSkill.GetByIdAsync(id);
             
-            if (entity == null)
+            if (entity == null || entity.InstructorId != instructorId.Value)
                 return NotFound(ApiBaseResponse<string>.Fail(ResponseMessages.NotFound));
 
             var dto = MapToDto(entity);
@@ -100,9 +142,27 @@ namespace Baseqt.API.Controllers
         [isAllowed("إدارة المدربين", "is_insert")]
         public async Task<IActionResult> Add(InstructorSkillCreateDto model)
         {
+            long? instructorId = model.InstructorId;
+
+            if (instructorId.HasValue)
+            {
+                var instructor = await _unitOfWork.Instructor.FindAsync(
+                    x => x.Id == instructorId.Value && x.IsDeleted != true);
+
+                if (instructor == null)
+                    return Ok(ApiBaseResponse<string>.Fail("المدرب غير موجود"));
+            }
+            else
+            {
+                instructorId = await GetCurrentInstructorIdAsync();
+                if (!instructorId.HasValue)
+                    return Ok(ApiBaseResponse<string>.Fail("لا يوجد سجل مدرب مرتبط بالمستخدم الحالي"));
+            }
+
             var entity = new InstructorSkill
             {
-                Name = model.Name
+                Name = model.Name,
+                InstructorId = instructorId.Value
             };
 
             await _unitOfWork.InstructorSkill.AddAsync(entity);
@@ -163,8 +223,21 @@ namespace Baseqt.API.Controllers
             return new InstructorSkillDto
             {
                 Id = entity.Id,
+                InstructorId = entity.InstructorId,
                 Name = entity.Name
             };
+        }
+
+        private async Task<long?> GetCurrentInstructorIdAsync()
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId))
+                return null;
+
+            var instructor = await _unitOfWork.Instructor.FindAsync(
+                x => x.UserId == currentUserId && x.IsDeleted != true);
+
+            return instructor?.Id;
         }
         #endregion
     }

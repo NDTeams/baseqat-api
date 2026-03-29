@@ -208,6 +208,375 @@ namespace Baseqat.EF.Migrations
                     b.ToTable("Privileges_UserBased");
                 });
 
+            modelBuilder.Entity("Baseqat.EF.Models.ClientProfile", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Bio")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CvUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("FacebookUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("Gender")
+                        .HasColumnType("int");
+
+                    b.Property<string>("GitHubUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("InstagramUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("InterestsJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LinkedInUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("SkillsJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("WebsiteUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("XUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ClientProfiles");
+                });
+
+            modelBuilder.Entity("Baseqat.EF.Models.Consultant", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Availability")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AvatarUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Bio")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CvUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DenialReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FacebookUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Gender")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("HourlyRate")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("InstagramUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LinkedInUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PayloadJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("Rating")
+                        .HasColumnType("float");
+
+                    b.Property<string>("RequestStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedByUserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Specialty")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SubmittedByUserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("XUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("YearsOfExperience")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Consultants");
+                });
+
+            modelBuilder.Entity("Baseqat.EF.Models.ConsultantConsultationCategory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("ConsultantId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ConsultationCategoryId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConsultantId");
+
+                    b.HasIndex("ConsultationCategoryId");
+
+                    b.ToTable("ConsultantConsultationCategories");
+                });
+
+            modelBuilder.Entity("Baseqat.EF.Models.ConsultantSkill", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long?>("ConsultantId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConsultantId");
+
+                    b.ToTable("ConsultantSkills");
+                });
+
+            modelBuilder.Entity("Baseqat.EF.Models.ConsultationCategory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ConsultationCategories");
+                });
+
+            modelBuilder.Entity("Baseqat.EF.Models.ConsultationRequest", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("AdminNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClientEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClientName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClientPhone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("ConsultantId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ConsultantNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ConsultantResponse")
+                        .HasColumnType("int");
+
+                    b.Property<long>("ConsultationCategoryId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("PreferredDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PreferredTime")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("SuggestedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SuggestedTime")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ZoomLink")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConsultantId");
+
+                    b.HasIndex("ConsultationCategoryId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ConsultationRequests");
+                });
+
             modelBuilder.Entity("Baseqat.EF.Models.ContactRequest", b =>
                 {
                     b.Property<long>("Id")
@@ -307,6 +676,9 @@ namespace Baseqat.EF.Migrations
                     b.Property<int>("CourseDays")
                         .HasColumnType("int");
 
+                    b.Property<int>("CourseType")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -337,8 +709,23 @@ namespace Baseqat.EF.Migrations
                     b.Property<string>("Language")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("float");
+
                     b.Property<int>("Level")
                         .HasColumnType("int");
+
+                    b.Property<string>("Location")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("PlatformName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PlatformUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("Price")
                         .HasColumnType("decimal(18,2)");
@@ -529,6 +916,8 @@ namespace Baseqat.EF.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CourseId");
+
                     b.ToTable("CourseRequirements");
                 });
 
@@ -575,7 +964,7 @@ namespace Baseqat.EF.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long?>("CourseId")
+                    b.Property<long>("CourseId")
                         .HasColumnType("bigint");
 
                     b.Property<int>("Order")
@@ -590,6 +979,39 @@ namespace Baseqat.EF.Migrations
                     b.HasIndex("CourseId");
 
                     b.ToTable("CourseSections");
+                });
+
+            modelBuilder.Entity("Baseqat.EF.Models.HomeStatistic", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("HomeStatistics");
                 });
 
             modelBuilder.Entity("Baseqat.EF.Models.Instructor", b =>
@@ -623,30 +1045,14 @@ namespace Baseqat.EF.Migrations
                     b.Property<string>("DeletedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("DenialReason")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("FacebookUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Gender")
                         .HasColumnType("int");
-
-                    b.Property<string>("InfoUpdateDenialReason")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("InfoUpdatePayloadJson")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("InfoUpdateRequestStatus")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime?>("InfoUpdateReviewedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("InfoUpdateReviewedByUserId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("InfoUpdateSubmittedByUserId")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("InstagramUrl")
                         .HasColumnType("nvarchar(max)");
@@ -664,8 +1070,24 @@ namespace Baseqat.EF.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("PayloadJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<double?>("Rating")
                         .HasColumnType("float");
+
+                    b.Property<string>("RequestStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedByUserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SubmittedByUserId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -719,6 +1141,74 @@ namespace Baseqat.EF.Migrations
                     b.HasIndex("InstructorId");
 
                     b.ToTable("InstructorsSkill");
+                });
+
+            modelBuilder.Entity("Baseqat.EF.Models.MediaCenter", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Author")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Category")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("EventDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EventEndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EventLocation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EventTime")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MediaType")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ReadingTimeMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("VideoUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("MediaCenters");
                 });
 
             modelBuilder.Entity("Baseqat.EF.Models.StudentReview", b =>
@@ -959,6 +1449,80 @@ namespace Baseqat.EF.Migrations
                     b.Navigation("Privileges");
                 });
 
+            modelBuilder.Entity("Baseqat.EF.Models.ClientProfile", b =>
+                {
+                    b.HasOne("Baseqat.EF.Models.Auth.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Baseqat.EF.Models.Consultant", b =>
+                {
+                    b.HasOne("Baseqat.EF.Models.Auth.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Baseqat.EF.Models.ConsultantConsultationCategory", b =>
+                {
+                    b.HasOne("Baseqat.EF.Models.Consultant", "Consultant")
+                        .WithMany("ConsultantCategories")
+                        .HasForeignKey("ConsultantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Baseqat.EF.Models.ConsultationCategory", "ConsultationCategory")
+                        .WithMany("ConsultantCategories")
+                        .HasForeignKey("ConsultationCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Consultant");
+
+                    b.Navigation("ConsultationCategory");
+                });
+
+            modelBuilder.Entity("Baseqat.EF.Models.ConsultantSkill", b =>
+                {
+                    b.HasOne("Baseqat.EF.Models.Consultant", "Consultant")
+                        .WithMany("Skills")
+                        .HasForeignKey("ConsultantId");
+
+                    b.Navigation("Consultant");
+                });
+
+            modelBuilder.Entity("Baseqat.EF.Models.ConsultationRequest", b =>
+                {
+                    b.HasOne("Baseqat.EF.Models.Consultant", "Consultant")
+                        .WithMany("ConsultationRequests")
+                        .HasForeignKey("ConsultantId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Baseqat.EF.Models.ConsultationCategory", "ConsultationCategory")
+                        .WithMany()
+                        .HasForeignKey("ConsultationCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Baseqat.EF.Models.Auth.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Consultant");
+
+                    b.Navigation("ConsultationCategory");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Baseqat.EF.Models.Course", b =>
                 {
                     b.HasOne("Baseqat.EF.Models.CourseCategory", "CourseCategory")
@@ -981,7 +1545,7 @@ namespace Baseqat.EF.Migrations
             modelBuilder.Entity("Baseqat.EF.Models.CourseEnrollment", b =>
                 {
                     b.HasOne("Baseqat.EF.Models.Course", "Course")
-                        .WithMany()
+                        .WithMany("Enrollments")
                         .HasForeignKey("CourseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1025,10 +1589,19 @@ namespace Baseqat.EF.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Baseqat.EF.Models.CourseRequirement", b =>
+                {
+                    b.HasOne("Baseqat.EF.Models.Course", null)
+                        .WithMany("Requirements")
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Baseqat.EF.Models.CourseReview", b =>
                 {
                     b.HasOne("Baseqat.EF.Models.Course", "Course")
-                        .WithMany()
+                        .WithMany("Reviews")
                         .HasForeignKey("CourseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1044,9 +1617,13 @@ namespace Baseqat.EF.Migrations
 
             modelBuilder.Entity("Baseqat.EF.Models.CourseSection", b =>
                 {
-                    b.HasOne("Baseqat.EF.Models.Course", null)
+                    b.HasOne("Baseqat.EF.Models.Course", "Course")
                         .WithMany("Sections")
-                        .HasForeignKey("CourseId");
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
                 });
 
             modelBuilder.Entity("Baseqat.EF.Models.Instructor", b =>
@@ -1060,9 +1637,11 @@ namespace Baseqat.EF.Migrations
 
             modelBuilder.Entity("Baseqat.EF.Models.InstructorSkill", b =>
                 {
-                    b.HasOne("Baseqat.EF.Models.Instructor", null)
+                    b.HasOne("Baseqat.EF.Models.Instructor", "Instructor")
                         .WithMany("Skills")
                         .HasForeignKey("InstructorId");
+
+                    b.Navigation("Instructor");
                 });
 
             modelBuilder.Entity("Baseqat.EF.Models.StudentReview", b =>
@@ -1150,9 +1729,29 @@ namespace Baseqat.EF.Migrations
                     b.Navigation("Privileges_UserBased");
                 });
 
+            modelBuilder.Entity("Baseqat.EF.Models.Consultant", b =>
+                {
+                    b.Navigation("ConsultantCategories");
+
+                    b.Navigation("ConsultationRequests");
+
+                    b.Navigation("Skills");
+                });
+
+            modelBuilder.Entity("Baseqat.EF.Models.ConsultationCategory", b =>
+                {
+                    b.Navigation("ConsultantCategories");
+                });
+
             modelBuilder.Entity("Baseqat.EF.Models.Course", b =>
                 {
                     b.Navigation("CourseInstructors");
+
+                    b.Navigation("Enrollments");
+
+                    b.Navigation("Requirements");
+
+                    b.Navigation("Reviews");
 
                     b.Navigation("Sections");
                 });

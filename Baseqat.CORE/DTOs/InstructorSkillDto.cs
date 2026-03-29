@@ -7,6 +7,7 @@ namespace Baseqat.CORE.DTOs
     {
         [Required]
         public string Name { get; set; } = string.Empty;
+        public long? InstructorId { get; set; }
     }
     #endregion
 
@@ -21,6 +22,7 @@ namespace Baseqat.CORE.DTOs
     public class InstructorSkillDto
     {
         public long Id { get; set; }
+        public long? InstructorId { get; set; }
         public string Name { get; set; } = string.Empty;
     }
     #endregion
@@ -29,6 +31,7 @@ namespace Baseqat.CORE.DTOs
     public class InstructorSkillFilterDto
     {
         public long? Id { get; set; }
+        public long? InstructorId { get; set; }
         public string? Name { get; set; }
     }
     #endregion

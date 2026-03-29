@@ -38,6 +38,14 @@
         
        
 
+            // Course Type & Location
+            public CourseType CourseType { get; set; }
+            public string? Location { get; set; }
+            public double? Latitude { get; set; }
+            public double? Longitude { get; set; }
+            public string? PlatformName { get; set; }
+            public string? PlatformUrl { get; set; }
+
             // Status
             public CourseStatus Status { get; set; }
 
@@ -52,6 +60,9 @@
 
             public ICollection<CourseSection> Sections { get; set; } = new List<CourseSection>();
             public ICollection<CourseInstructor> CourseInstructors { get; set; }
+            public ICollection<CourseRequirement> Requirements { get; set; } = new List<CourseRequirement>();
+            public ICollection<CourseReview> Reviews { get; set; } = new List<CourseReview>();
+            public ICollection<CourseEnrollment> Enrollments { get; set; } = new List<CourseEnrollment>();
         }
 
     }

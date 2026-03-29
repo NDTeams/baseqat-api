@@ -8,7 +8,9 @@ using Baseqat.EF.Models;
 using Baseqt.API.Helper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq.Expressions;
+using System.Security.Claims;
 
 namespace Baseqt.API.Controllers
 {
@@ -178,7 +180,32 @@ namespace Baseqt.API.Controllers
         }
         #endregion
 
+        #region Client: Get My Enrollments
+        [HttpGet("GetMyEnrollments")]
+        public async Task<IActionResult> GetMyEnrollments()
+        {
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(ApiBaseResponse<string>.Fail("غير مصرح"));
+
+            var enrollments = await _unitOfWork.CourseEnrollment.FindAllAsync(
+                x => x.UserId == userId,
+                ["Course", "Course.Instructor", "Course.Sections", "Course.Enrollments"]
+            );
+
+            var dtos = enrollments.Select(MapToMyEnrollmentDto).ToList();
+            return Ok(ApiBaseResponse<List<MyEnrollmentDto>>.Success(dtos, ResponseMessages.DataRetrieved));
+        }
+        #endregion
+
         #region Helper Methods
+        private string? GetCurrentUserId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                ?? User.FindFirstValue("sub");
+        }
+
         private CourseEnrollmentDto MapToDto(CourseEnrollment entity)
         {
             return new CourseEnrollmentDto
@@ -190,6 +217,35 @@ namespace Baseqt.API.Controllers
                 UserName = entity.User?.UserName ?? string.Empty,
                 UserEmail = entity.User?.Email ?? string.Empty,
                 EnrolledAt = DateHelper.ToHijri(entity.EnrolledAt)
+            };
+        }
+
+        private MyEnrollmentDto MapToMyEnrollmentDto(CourseEnrollment entity)
+        {
+            var course = entity.Course;
+            return new MyEnrollmentDto
+            {
+                EnrollmentId = entity.Id,
+                EnrolledAt = DateHelper.ToHijri(entity.EnrolledAt),
+                CourseId = entity.CourseId,
+                CourseTitle = course?.Title ?? string.Empty,
+                CourseSubtitle = course?.Subtitle,
+                ThumbnailUrl = course?.ThumbnailUrl,
+                Level = course?.Level ?? 0,
+                LevelName = course?.Level.ToString() ?? string.Empty,
+                CourseType = course?.CourseType ?? 0,
+                CourseTypeName = course?.CourseType.ToString() ?? string.Empty,
+                Status = course?.Status ?? 0,
+                StatusName = course?.Status.ToString() ?? string.Empty,
+                TotalDurationInHours = course?.TotalDurationInHours ?? 0,
+                HasCertificate = course?.HasCertificate ?? false,
+                StartDate = DateHelper.ToHijri(course?.StartDate),
+                EndDate = DateHelper.ToHijri(course?.EndDate),
+                Location = course?.Location,
+                InstructorName = course?.Instructor?.Name ?? string.Empty,
+                InstructorAvatarUrl = course?.Instructor?.AvatarUrl,
+                TotalSections = course?.Sections?.Count ?? 0,
+                TotalEnrollments = course?.Enrollments?.Count ?? 0,
             };
         }
         #endregion

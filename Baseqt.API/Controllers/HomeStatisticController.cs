@@ -1,6 +1,8 @@
 using Baseqat.CORE.DTOs;
 using Baseqat.CORE.Response;
 using Baseqat.EF.Consts;
+using Baseqat.EF.DATA;
+using Baseqat.EF.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,98 +13,140 @@ namespace Baseqt.API.Controllers
     [AllowAnonymous]
     public class HomeStatisticController : ControllerBase
     {
-        private static readonly List<HomeStatisticDto> _statistics = new()
-        {
-            new HomeStatisticDto { Title = "عميل موثوق", Number = "350+" },
-            new HomeStatisticDto { Title = "ورش وجلسات شهرية", Number = "28" },
-            new HomeStatisticDto { Title = "خبير وشريك", Number = "42" },
-            new HomeStatisticDto { Title = "معدل الرضا", Number = "98%" },
-            new HomeStatisticDto { Title = "دولة عملنا بها", Number = "15" }
-        };
+        private readonly IDataUnit _unitOfWork;
 
-        [HttpGet("GetAll")]
-        public IActionResult GetAll()
+        public HomeStatisticController(IDataUnit unitOfWork)
         {
-            var result = _statistics
-                .Select(x => new HomeStatisticDto { Title = x.Title, Number = x.Number })
-                .ToList();
-
-            return Ok(ApiBaseResponse<List<HomeStatisticDto>>.Success(result, ResponseMessages.DataRetrieved));
+            _unitOfWork = unitOfWork;
         }
 
-        [HttpGet("GetByTitle/{title}")]
-        public IActionResult GetByTitle(string title)
+        [HttpGet("GetAll")]
+        public async Task<IActionResult> GetAll()
         {
-            if (string.IsNullOrWhiteSpace(title))
-                return BadRequest(ApiBaseResponse<string>.Fail(ResponseMessages.InvalidData));
+            var result = await _unitOfWork.HomeStatistic.FindAllAsync(
+                criteria: x => x.IsActive,
+                skip: null, take: null,
+                orderBy: x => x.SortOrder,
+                orderByDirection: "ASC"
+            );
 
-            var item = _statistics.FirstOrDefault(x =>
-                x.Title.Equals(title.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (result == null || !result.Any())
+                return Ok(ApiBaseResponse<string>.Success(null, ResponseMessages.NotFound));
 
-            if (item == null)
+            var dtos = result.Select(x => new HomeStatisticDto
+            {
+                Id = x.Id,
+                Title = x.Title,
+                Value = x.Value,
+                Icon = x.Icon,
+                SortOrder = x.SortOrder,
+                IsActive = x.IsActive
+            }).ToList();
+
+            return Ok(ApiBaseResponse<List<HomeStatisticDto>>.Success(dtos, ResponseMessages.DataRetrieved));
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(long id)
+        {
+            var entity = await _unitOfWork.HomeStatistic.GetByIdAsync(id);
+            if (entity == null)
                 return NotFound(ApiBaseResponse<string>.Fail(ResponseMessages.NotFound));
 
-            var dto = new HomeStatisticDto { Title = item.Title, Number = item.Number };
+            var dto = new HomeStatisticDto
+            {
+                Id = entity.Id,
+                Title = entity.Title,
+                Value = entity.Value,
+                Icon = entity.Icon,
+                SortOrder = entity.SortOrder,
+                IsActive = entity.IsActive
+            };
+
             return Ok(ApiBaseResponse<HomeStatisticDto>.Success(dto, ResponseMessages.DataRetrieved));
         }
 
         [HttpPost("Add")]
-        public IActionResult Add([FromBody] HomeStatisticDto model)
+        public async Task<IActionResult> Add([FromBody] HomeStatisticCreateDto model)
         {
-            if (model == null || string.IsNullOrWhiteSpace(model.Title) || string.IsNullOrWhiteSpace(model.Number))
+            if (model == null || string.IsNullOrWhiteSpace(model.Title) || string.IsNullOrWhiteSpace(model.Value))
                 return BadRequest(ApiBaseResponse<string>.Fail(ResponseMessages.InvalidData));
 
-            var exists = _statistics.Any(x =>
-                x.Title.Equals(model.Title.Trim(), StringComparison.OrdinalIgnoreCase));
-
-            if (exists)
-                return BadRequest(ApiBaseResponse<string>.Fail("العنوان موجود مسبقًا"));
-
-            var entity = new HomeStatisticDto
+            var entity = new HomeStatistic
             {
                 Title = model.Title.Trim(),
-                Number = model.Number.Trim()
+                Value = model.Value.Trim(),
+                Icon = model.Icon?.Trim(),
+                SortOrder = model.SortOrder,
+                IsActive = true
             };
 
-            _statistics.Add(entity);
+            await _unitOfWork.HomeStatistic.AddAsync(entity);
+            var result = await _unitOfWork.CompleteAsync();
 
-            return Ok(ApiBaseResponse<HomeStatisticDto>.Success(entity, ResponseMessages.DataSaved));
+            if (result == 0)
+                return Ok(ApiBaseResponse<string>.Fail(ResponseMessages.OperationFailed));
+
+            var dto = new HomeStatisticDto
+            {
+                Id = entity.Id,
+                Title = entity.Title,
+                Value = entity.Value,
+                Icon = entity.Icon,
+                SortOrder = entity.SortOrder,
+                IsActive = entity.IsActive
+            };
+
+            return Ok(ApiBaseResponse<HomeStatisticDto>.Success(dto, ResponseMessages.DataSaved));
         }
 
-        [HttpPut("Update/{title}")]
-        public IActionResult Update(string title, [FromBody] HomeStatisticDto model)
+        [HttpPut("Update/{id}")]
+        public async Task<IActionResult> Update(long id, [FromBody] HomeStatisticUpdateDto model)
         {
-            if (string.IsNullOrWhiteSpace(title) || model == null)
+            if (model == null)
                 return BadRequest(ApiBaseResponse<string>.Fail(ResponseMessages.InvalidData));
 
-            var entity = _statistics.FirstOrDefault(x =>
-                x.Title.Equals(title.Trim(), StringComparison.OrdinalIgnoreCase));
-
+            var entity = await _unitOfWork.HomeStatistic.GetByIdAsync(id);
             if (entity == null)
                 return NotFound(ApiBaseResponse<string>.Fail(ResponseMessages.NotFound));
 
-            if (!string.IsNullOrWhiteSpace(model.Title))
-                entity.Title = model.Title.Trim();
+            if (!string.IsNullOrWhiteSpace(model.Title)) entity.Title = model.Title.Trim();
+            if (!string.IsNullOrWhiteSpace(model.Value)) entity.Value = model.Value.Trim();
+            if (model.Icon != null) entity.Icon = model.Icon.Trim();
+            if (model.SortOrder.HasValue) entity.SortOrder = model.SortOrder.Value;
+            if (model.IsActive.HasValue) entity.IsActive = model.IsActive.Value;
 
-            if (!string.IsNullOrWhiteSpace(model.Number))
-                entity.Number = model.Number.Trim();
+            _unitOfWork.HomeStatistic.Update(entity);
+            var result = await _unitOfWork.CompleteAsync();
 
-            return Ok(ApiBaseResponse<HomeStatisticDto>.Success(entity, ResponseMessages.DataUpdated));
+            if (result == 0)
+                return Ok(ApiBaseResponse<string>.Fail(ResponseMessages.OperationFailed));
+
+            var dto = new HomeStatisticDto
+            {
+                Id = entity.Id,
+                Title = entity.Title,
+                Value = entity.Value,
+                Icon = entity.Icon,
+                SortOrder = entity.SortOrder,
+                IsActive = entity.IsActive
+            };
+
+            return Ok(ApiBaseResponse<HomeStatisticDto>.Success(dto, ResponseMessages.DataUpdated));
         }
 
-        [HttpDelete("Delete/{title}")]
-        public IActionResult Delete(string title)
+        [HttpDelete("Delete/{id}")]
+        public async Task<IActionResult> Delete(long id)
         {
-            if (string.IsNullOrWhiteSpace(title))
-                return BadRequest(ApiBaseResponse<string>.Fail(ResponseMessages.InvalidData));
-
-            var entity = _statistics.FirstOrDefault(x =>
-                x.Title.Equals(title.Trim(), StringComparison.OrdinalIgnoreCase));
-
+            var entity = await _unitOfWork.HomeStatistic.GetByIdAsync(id);
             if (entity == null)
                 return NotFound(ApiBaseResponse<string>.Fail(ResponseMessages.NotFound));
 
-            _statistics.Remove(entity);
+            _unitOfWork.HomeStatistic.Delete(entity);
+            var result = await _unitOfWork.CompleteAsync();
+
+            if (result == 0)
+                return Ok(ApiBaseResponse<string>.Fail(ResponseMessages.OperationFailed));
 
             return Ok(ApiBaseResponse<string>.Success(string.Empty, ResponseMessages.DataDeleted));
         }

@@ -46,6 +46,85 @@ namespace Baseqt.API.Controllers
             _configuration = configuration;
         }
 
+        #region 0. Get Active (Public)
+        [HttpGet("GetActive")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetActive()
+        {
+            var result = await _unitOfWork.Instructor.FindAllAsync(
+                criteria: x => x.IsDeleted != true && x.IsActive == true,
+                includes: ["Skills"]
+            );
+
+            if (result == null || !result.Any())
+                return Ok(ApiBaseResponse<string>.Success(null, ResponseMessages.NotFound));
+
+            var dtos = result.Select(MapToDto).ToList();
+
+            return Ok(ApiBaseResponse<List<InstructorDto>>.Success(dtos, ResponseMessages.DataRetrieved));
+        }
+
+        [HttpGet("GetActiveById/{id}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetActiveById(long id)
+        {
+            var entity = await _unitOfWork.Instructor.FindAsync(
+                x => x.Id == id && x.IsDeleted != true && x.IsActive == true,
+                ["Skills", "StudentReviews", "CourseInstructors", "CourseInstructors.Course"]
+            );
+
+            if (entity == null)
+                return Ok(ApiBaseResponse<string>.Success(null, ResponseMessages.NotFound));
+
+            var dto = new InstructorDetailDto
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                Title = entity.Title,
+                Bio = entity.Bio,
+                AvatarUrl = BuildPublicUrl(entity.AvatarUrl),
+                Gender = entity.Gender,
+                GenderName = entity.Gender.ToString(),
+                Rating = entity.Rating,
+                TotalStudents = entity.TotalStudents,
+                TotalCources = entity.TotalCources,
+                IsActive = entity.IsActive,
+                YearsOfExperience = entity.YearsOfExperience,
+                LinkedInUrl = entity.LinkedInUrl,
+                XUrl = entity.XUrl,
+                InstagramUrl = entity.InstagramUrl,
+                FacebookUrl = entity.FacebookUrl,
+                CreatedAt = entity.CreatedAt,
+                Skills = entity.Skills?.Select(s => new InstructorSkillDto
+                {
+                    Id = s.Id,
+                    InstructorId = s.InstructorId,
+                    Name = s.Name
+                }).ToList() ?? new(),
+                Courses = entity.CourseInstructors?.Where(ci => ci.Course != null).Select(ci => new CourseDto
+                {
+                    Id = ci.Course.Id,
+                    Title = ci.Course.Title,
+                    Subtitle = ci.Course.Subtitle,
+                    Description = ci.Course.Description,
+                    ThumbnailUrl = BuildPublicUrl(ci.Course.ThumbnailUrl),
+                    Level = ci.Course.Level,
+                    LevelName = ci.Course.Level.ToString(),
+                    Price = ci.Course.Price,
+                }).ToList() ?? new(),
+                Reviews = entity.StudentReviews?.Select(r => new StudentReviewDto
+                {
+                    Id = r.Id,
+                    InstructorId = r.InstructorId,
+                    Rating = r.Rating,
+                    Comment = r.Comment,
+                }).ToList() ?? new()
+            };
+
+            return Ok(ApiBaseResponse<InstructorDetailDto>.Success(dto, ResponseMessages.DataRetrieved));
+        }
+        #endregion
+
         #region 1. Get All
         [HttpGet("GetAll")]
         [isAllowed("إدارة المدربين", "is_displayed")]
@@ -660,11 +739,101 @@ namespace Baseqt.API.Controllers
         }
         #endregion
 
-        #region 15. Submit Instructor Info Update Request
-        [HttpPost("SubmitInfoUpdateRequest")]
-        public async Task<IActionResult> SubmitInfoUpdateRequest(InstructorInfoUpdateRequestCreateDto model)
+        #region 15. Register Instructor Request
+        [HttpPost("RegisterRequest")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> RegisterRequest(
+            [FromForm] InstructorRequestCreateDto model,
+            IFormFile? avatarFile,
+            IFormFile? cvFile)
         {
-            var entity = await _unitOfWork.Instructor.GetByIdAsync(model.InstructorId);
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId))
+                return Unauthorized(ApiBaseResponse<string>.Fail("المستخدم غير مصادق"));
+
+            var currentUser = await _userManager.FindByIdAsync(currentUserId);
+            if (currentUser == null)
+                return NotFound(ApiBaseResponse<string>.Fail("المستخدم غير موجود"));
+
+            var existingInstructor = await _unitOfWork.Instructor.FindAsync(
+                x => x.UserId == currentUserId && x.IsDeleted != true);
+
+            if (existingInstructor != null)
+                return BadRequest(ApiBaseResponse<string>.Fail("يوجد سجل مدرب مرتبط بهذا المستخدم بالفعل"));
+
+            if (string.IsNullOrWhiteSpace(model.Name) || string.IsNullOrWhiteSpace(model.Title) || !model.Gender.HasValue || model.Gender == Gender.Unknown)
+                return BadRequest(ApiBaseResponse<string>.Fail("الاسم والمسمى والجنس حقول مطلوبة"));
+
+            Instructor entity;
+            try
+            {
+                entity = new Instructor
+                {
+                    Name = model.Name.Trim(),
+                    Title = model.Title.Trim(),
+                    Bio = model.Bio ?? string.Empty,
+                    Gender = model.Gender.Value,
+                    UserId = currentUserId,
+                    YearsOfExperience = model.YearsOfExperience,
+                    LinkedInUrl = model.LinkedInUrl,
+                    XUrl = model.XUrl,
+                    InstagramUrl = model.InstagramUrl,
+                    FacebookUrl = model.FacebookUrl,
+                    AvatarUrl = SaveAvatarFile(avatarFile),
+                    CvUrl = SaveCvFile(cvFile),
+                    IsActive = false,
+                    RequestStatus = InstructorRequestStatus.Pending,
+                    SubmittedByUserId = currentUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = currentUserId
+                };
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiBaseResponse<string>.Fail(ex.Message));
+            }
+
+            await _unitOfWork.Instructor.AddAsync(entity);
+            var result = await _unitOfWork.CompleteAsync();
+
+            if (result == 0)
+                return Ok(ApiBaseResponse<string>.Fail(ResponseMessages.OperationFailed));
+
+            var skillNames = model.Skills?
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Where(x => x.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (skillNames != null && skillNames.Any())
+            {
+                var skillEntities = skillNames.Select(skillName => new InstructorSkill
+                {
+                    InstructorId = entity.Id,
+                    Name = skillName
+                }).ToList();
+
+                await _unitOfWork.InstructorSkill.AddRangeAsync(skillEntities);
+                await _unitOfWork.CompleteAsync();
+            }
+
+            entity = await _unitOfWork.Instructor.FindAsync(x => x.Id == entity.Id, ["User", "Skills"]);
+
+            return Ok(ApiBaseResponse<InstructorDto>.Success(
+                MapToDto(entity!),
+                "تم تسجيل بيانات المدرب بنجاح وهي بانتظار المراجعة والاعتماد"));
+        }
+        #endregion
+
+        #region 16. Submit Instructor Request
+        [HttpPost("SubmitRequest")]
+        public async Task<IActionResult> SubmitRequest(InstructorRequestCreateDto model)
+        {
+            if (!model.InstructorId.HasValue || model.InstructorId.Value <= 0)
+                return BadRequest(ApiBaseResponse<string>.Fail("رقم المدرب مطلوب"));
+
+            var entity = await _unitOfWork.Instructor.GetByIdAsync(model.InstructorId.Value);
             if (entity == null || entity.IsDeleted == true)
                 return NotFound(ApiBaseResponse<string>.Fail("المدرب غير موجود"));
 
@@ -684,7 +853,7 @@ namespace Baseqt.API.Controllers
             if (!HasAnyRequestedField(model))
                 return BadRequest(ApiBaseResponse<string>.Fail("الطلب لا يحتوي أي بيانات للتحديث"));
 
-            var payload = new InstructorInfoUpdatePayload
+            var payload = new InstructorRequestPayload
             {
                 Name = model.Name,
                 Title = model.Title,
@@ -697,13 +866,13 @@ namespace Baseqt.API.Controllers
                 FacebookUrl = model.FacebookUrl
             };
 
-            entity.InfoUpdatePayloadJson = JsonSerializer.Serialize(payload);
+            entity.PayloadJson = JsonSerializer.Serialize(payload);
 
-            entity.InfoUpdateRequestStatus = InstructorInfoUpdateRequestStatus.Pending;
-            entity.InfoUpdateSubmittedByUserId = currentUserId;
-            entity.InfoUpdateReviewedByUserId = null;
-            entity.InfoUpdateReviewedAt = null;
-            entity.InfoUpdateDenialReason = null;
+            entity.RequestStatus = InstructorRequestStatus.Pending;
+            entity.SubmittedByUserId = currentUserId;
+            entity.ReviewedByUserId = null;
+            entity.ReviewedAt = null;
+            entity.DenialReason = null;
             entity.UpdatedAt = DateTime.UtcNow;
             entity.UpdatedBy = currentUserId;
 
@@ -713,24 +882,24 @@ namespace Baseqt.API.Controllers
             if (result == 0)
                 return Ok(ApiBaseResponse<string>.Fail(ResponseMessages.OperationFailed));
 
-            return Ok(ApiBaseResponse<InstructorInfoUpdateRequestDto>.Success(
-                MapToInfoUpdateRequestDto(entity),
+            return Ok(ApiBaseResponse<InstructorDto>.Success(
+                MapRequestToDto(entity),
                 "تم إرسال طلب تحديث بيانات المدرب بنجاح"));
         }
         #endregion
 
-        #region 16. Get Instructor Info Update Requests
-        [HttpGet("GetInfoUpdateRequests")]
-        [isAllowed("إدارة العملاء", "is_update")]
-        public async Task<IActionResult> GetInfoUpdateRequests(
+        #region 17. Get Instructor Requests
+        [HttpGet("GetRequests")]
+        [isAllowed("إدارة المدربين", "is_displayed")]
+        public async Task<IActionResult> GetRequests(
             [FromQuery] long? instructorId,
-            [FromQuery] InstructorInfoUpdateRequestStatus? status)
+            [FromQuery] InstructorRequestStatus? status)
         {
             Expression<Func<Instructor, bool>> criteria = x =>
                 x.IsDeleted != true &&
-                x.InfoUpdateRequestStatus != null &&
+                x.RequestStatus != null &&
                 (instructorId == null || x.Id == instructorId) &&
-                (status == null || x.InfoUpdateRequestStatus == status);
+                (status == null || x.RequestStatus == status);
 
             var result = await _unitOfWork.Instructor.FindAllAsync(
                 criteria: criteria,
@@ -739,18 +908,18 @@ namespace Baseqt.API.Controllers
                 orderBy: x => x.Id,
                 orderByDirection: OrderBy.Descending);
 
-            var dtos = result.Select(MapToInfoUpdateRequestDto).ToList();
+            var dtos = result.Select(MapRequestToDto).ToList();
 
-            return Ok(ApiBaseResponse<List<InstructorInfoUpdateRequestDto>>.Success(
+            return Ok(ApiBaseResponse<List<InstructorDto>>.Success(
                 dtos,
                 dtos.Any() ? ResponseMessages.DataRetrieved : ResponseMessages.NotFound));
         }
         #endregion
 
-        #region 17. Review Instructor Info Update Request
-        [HttpPut("ReviewInfoUpdateRequest/{requestId}")]
-        [isAllowed("إدارة العملاء", "is_update")]
-        public async Task<IActionResult> ReviewInfoUpdateRequest(long requestId, InstructorInfoUpdateRequestReviewDto model)
+        #region 18. Review Instructor Request
+        [HttpPut("ReviewRequest/{requestId}")]
+        [isAllowed("إدارة المدربين", "is_update")]
+        public async Task<IActionResult> ReviewRequest(long requestId, InstructorRequestReviewDto model)
         {
             var request = await _unitOfWork.Instructor.FindAsync(
                 x => x.Id == requestId && x.IsDeleted != true);
@@ -758,7 +927,7 @@ namespace Baseqt.API.Controllers
             if (request == null)
                 return NotFound(ApiBaseResponse<string>.Fail("طلب التحديث غير موجود"));
 
-            if (request.InfoUpdateRequestStatus != InstructorInfoUpdateRequestStatus.Pending)
+            if (request.RequestStatus != InstructorRequestStatus.Pending)
                 return BadRequest(ApiBaseResponse<string>.Fail("تمت مراجعة هذا الطلب مسبقاً"));
 
             if (!model.Approve && string.IsNullOrWhiteSpace(model.DenialReason))
@@ -768,32 +937,38 @@ namespace Baseqt.API.Controllers
 
             if (model.Approve)
             {
-                var payload = ParseInfoUpdatePayload(request.InfoUpdatePayloadJson);
-                if (payload == null)
-                    return BadRequest(ApiBaseResponse<string>.Fail("بيانات الطلب غير صالحة"));
+                // إذا كان هناك PayloadJson (طلب تحديث بيانات) نطبق التغييرات
+                if (!string.IsNullOrWhiteSpace(request.PayloadJson))
+                {
+                    var payload = ParseRequestPayload(request.PayloadJson);
+                    if (payload != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(payload.Name)) request.Name = payload.Name;
+                        if (!string.IsNullOrWhiteSpace(payload.Title)) request.Title = payload.Title;
+                        if (payload.Bio != null) request.Bio = payload.Bio;
+                        if (payload.Gender.HasValue && payload.Gender.Value != Gender.Unknown) request.Gender = payload.Gender.Value;
+                        if (payload.YearsOfExperience.HasValue) request.YearsOfExperience = payload.YearsOfExperience;
+                        if (payload.LinkedInUrl != null) request.LinkedInUrl = payload.LinkedInUrl;
+                        if (payload.XUrl != null) request.XUrl = payload.XUrl;
+                        if (payload.InstagramUrl != null) request.InstagramUrl = payload.InstagramUrl;
+                        if (payload.FacebookUrl != null) request.FacebookUrl = payload.FacebookUrl;
+                    }
+                }
+                // طلب تسجيل جديد (RegisterRequest) - البيانات محفوظة مباشرة في الحقول
 
-                if (!string.IsNullOrWhiteSpace(payload.Name)) request.Name = payload.Name;
-                if (!string.IsNullOrWhiteSpace(payload.Title)) request.Title = payload.Title;
-                if (payload.Bio != null) request.Bio = payload.Bio;
-                if (payload.Gender.HasValue) request.Gender = payload.Gender.Value;
-                if (payload.YearsOfExperience.HasValue) request.YearsOfExperience = payload.YearsOfExperience;
-                if (payload.LinkedInUrl != null) request.LinkedInUrl = payload.LinkedInUrl;
-                if (payload.XUrl != null) request.XUrl = payload.XUrl;
-                if (payload.InstagramUrl != null) request.InstagramUrl = payload.InstagramUrl;
-                if (payload.FacebookUrl != null) request.FacebookUrl = payload.FacebookUrl;
-
-                request.InfoUpdateRequestStatus = InstructorInfoUpdateRequestStatus.Approved;
-                request.InfoUpdateDenialReason = null;
-                request.InfoUpdatePayloadJson = null;
+                request.RequestStatus = InstructorRequestStatus.Approved;
+                request.DenialReason = null;
+                request.PayloadJson = null;
+                request.IsActive = true;
             }
             else
             {
-                request.InfoUpdateRequestStatus = InstructorInfoUpdateRequestStatus.Denied;
-                request.InfoUpdateDenialReason = model.DenialReason?.Trim();
+                request.RequestStatus = InstructorRequestStatus.Denied;
+                request.DenialReason = model.DenialReason?.Trim();
             }
 
-            request.InfoUpdateReviewedAt = DateTime.UtcNow;
-            request.InfoUpdateReviewedByUserId = currentUserId;
+            request.ReviewedAt = DateTime.UtcNow;
+            request.ReviewedByUserId = currentUserId;
             request.UpdatedAt = DateTime.UtcNow;
             request.UpdatedBy = currentUserId;
 
@@ -803,8 +978,8 @@ namespace Baseqt.API.Controllers
             if (result == 0)
                 return Ok(ApiBaseResponse<string>.Fail(ResponseMessages.OperationFailed));
 
-            return Ok(ApiBaseResponse<InstructorInfoUpdateRequestDto>.Success(
-                MapToInfoUpdateRequestDto(request),
+            return Ok(ApiBaseResponse<InstructorDto>.Success(
+                MapToDto(request),
                 model.Approve ? "تم اعتماد طلب تحديث بيانات المدرب" : "تم رفض طلب تحديث بيانات المدرب"));
         }
         #endregion
@@ -832,46 +1007,47 @@ namespace Baseqt.API.Controllers
                 LinkedInUrl = entity.LinkedInUrl,
                 XUrl = entity.XUrl,
                 InstagramUrl = entity.InstagramUrl,
-                FacebookUrl = entity.FacebookUrl
-            };
-        }
-
-        private InstructorInfoUpdateRequestDto MapToInfoUpdateRequestDto(Instructor entity)
-        {
-            var payload = ParseInfoUpdatePayload(entity.InfoUpdatePayloadJson);
-
-            return new InstructorInfoUpdateRequestDto
-            {
-                Id = entity.Id,
-                InstructorId = entity.Id,
-                InstructorName = entity.Name,
-                SubmittedByUserId = entity.InfoUpdateSubmittedByUserId,
-                Status = entity.InfoUpdateRequestStatus ?? InstructorInfoUpdateRequestStatus.Pending,
-                StatusName = (entity.InfoUpdateRequestStatus ?? InstructorInfoUpdateRequestStatus.Pending).ToString(),
-                Name = payload?.Name,
-                Title = payload?.Title,
-                Bio = payload?.Bio,
-                Gender = payload?.Gender,
-                YearsOfExperience = payload?.YearsOfExperience,
-                LinkedInUrl = payload?.LinkedInUrl,
-                XUrl = payload?.XUrl,
-                InstagramUrl = payload?.InstagramUrl,
-                FacebookUrl = payload?.FacebookUrl,
-                ReviewedByUserId = entity.InfoUpdateReviewedByUserId,
-                ReviewedAt = entity.InfoUpdateReviewedAt,
-                DenialReason = entity.InfoUpdateDenialReason,
+                FacebookUrl = entity.FacebookUrl,
+                SubmittedByUserId = entity.SubmittedByUserId,
+                RequestStatus = entity.RequestStatus,
+                RequestStatusName = entity.RequestStatus?.ToString(),
+                ReviewedByUserId = entity.ReviewedByUserId,
+                ReviewedAt = entity.ReviewedAt,
+                DenialReason = entity.DenialReason,
                 CreatedAt = entity.CreatedAt
             };
         }
 
-        private static InstructorInfoUpdatePayload? ParseInfoUpdatePayload(string? payloadJson)
+        private InstructorDto MapRequestToDto(Instructor entity)
+        {
+            var dto = MapToDto(entity);
+            var payload = ParseRequestPayload(entity.PayloadJson);
+
+            if (payload != null)
+            {
+                dto.Name = payload.Name ?? dto.Name;
+                dto.Title = payload.Title ?? dto.Title;
+                dto.Bio = payload.Bio ?? dto.Bio;
+                dto.Gender = payload.Gender ?? dto.Gender;
+                dto.GenderName = dto.Gender.ToString();
+                dto.YearsOfExperience = payload.YearsOfExperience ?? dto.YearsOfExperience;
+                dto.LinkedInUrl = payload.LinkedInUrl ?? dto.LinkedInUrl;
+                dto.XUrl = payload.XUrl ?? dto.XUrl;
+                dto.InstagramUrl = payload.InstagramUrl ?? dto.InstagramUrl;
+                dto.FacebookUrl = payload.FacebookUrl ?? dto.FacebookUrl;
+            }
+
+            return dto;
+        }
+
+        private static InstructorRequestPayload? ParseRequestPayload(string? payloadJson)
         {
             if (string.IsNullOrWhiteSpace(payloadJson))
                 return null;
 
             try
             {
-                return JsonSerializer.Deserialize<InstructorInfoUpdatePayload>(payloadJson);
+                return JsonSerializer.Deserialize<InstructorRequestPayload>(payloadJson);
             }
             catch
             {
@@ -879,7 +1055,7 @@ namespace Baseqt.API.Controllers
             }
         }
 
-        private class InstructorInfoUpdatePayload
+        private class InstructorRequestPayload
         {
             public string? Name { get; set; }
             public string? Title { get; set; }
@@ -892,17 +1068,66 @@ namespace Baseqt.API.Controllers
             public string? FacebookUrl { get; set; }
         }
 
-        private static bool HasAnyRequestedField(InstructorInfoUpdateRequestCreateDto model)
+        private static bool HasAnyRequestedField(InstructorRequestCreateDto model)
         {
             return !string.IsNullOrWhiteSpace(model.Name) ||
                    !string.IsNullOrWhiteSpace(model.Title) ||
                    model.Bio != null ||
-                   model.Gender.HasValue ||
+                   (model.Gender.HasValue && model.Gender.Value != Gender.Unknown) ||
                    model.YearsOfExperience.HasValue ||
                    model.LinkedInUrl != null ||
                    model.XUrl != null ||
                    model.InstagramUrl != null ||
                    model.FacebookUrl != null;
+        }
+
+        private string SaveAvatarFile(IFormFile? file)
+        {
+            if (file == null || file.Length == 0)
+                return string.Empty;
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+                throw new InvalidOperationException("نوع ملف الصورة غير مسموح به");
+
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "instructors");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = $"{Guid.NewGuid()}{extension}";
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            using var stream = new FileStream(filePath, FileMode.Create);
+            file.CopyTo(stream);
+
+            return BuildPublicUrl($"/uploads/instructors/{fileName}") ?? string.Empty;
+        }
+
+        private string? SaveCvFile(IFormFile? file)
+        {
+            if (file == null || file.Length == 0)
+                return null;
+
+            var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+                throw new InvalidOperationException("نوع ملف السيرة الذاتية غير مسموح به");
+
+            if (file.Length > 5 * 1024 * 1024)
+                throw new InvalidOperationException("حجم ملف السيرة الذاتية يجب أن لا يتجاوز 5 ميجابايت");
+
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "instructors", "cv");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = $"{Guid.NewGuid()}{extension}";
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            using var stream = new FileStream(filePath, FileMode.Create);
+            file.CopyTo(stream);
+
+            return BuildPublicUrl($"/uploads/instructors/cv/{fileName}");
         }
 
         private string? BuildPublicUrl(string? url)

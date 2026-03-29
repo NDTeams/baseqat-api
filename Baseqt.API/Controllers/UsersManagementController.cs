@@ -37,18 +37,24 @@ namespace Baseqt.API.Controllers
                 return NotFound(ApiBaseResponse<string>
                     .Fail(ResponseMessages.NotFound));
 
-            var dtos = users.Select(u => new
+            var dtos = new List<object>();
+            foreach (var u in users)
             {
-                u.Id,
-                u.UserName,
-                u.Email,
-                u.PhoneNumber,
-                u.FullName,
-                JoinedDate = u.JoinedDate.ToString("dd-MM-yyyy"),
-                isConfirmed = (u.PhoneNumberConfirmed ? "مفعل" : "غير مفعل"),
-                isLocked = u.LockoutEnd.HasValue && u.LockoutEnd.Value > DateTimeOffset.UtcNow,
-                userImage = string.IsNullOrEmpty(u.ProfilePictureUrl) ? null : u.ProfilePictureUrl//$"{Request.Scheme}://{Request.Host}{u.UserImage}"
-            }).ToList();
+                var roles = await _userManager.GetRolesAsync(u);
+                dtos.Add(new
+                {
+                    u.Id,
+                    u.UserName,
+                    u.Email,
+                    u.PhoneNumber,
+                    u.FullName,
+                    Roles = roles.ToList(),
+                    JoinedDate = u.JoinedDate.ToString("dd-MM-yyyy"),
+                    isConfirmed = (u.PhoneNumberConfirmed ? "مفعل" : "غير مفعل"),
+                    isLocked = u.LockoutEnd.HasValue && u.LockoutEnd.Value > DateTimeOffset.UtcNow,
+                    userImage = string.IsNullOrEmpty(u.ProfilePictureUrl) ? null : u.ProfilePictureUrl
+                });
+            }
 
             return Ok(ApiBaseResponse<IEnumerable<object>>.Success(dtos, ResponseMessages.DataRetrieved));
         }
@@ -89,7 +95,7 @@ namespace Baseqt.API.Controllers
 
         [HttpPut("UpdateBaseqatEmployee/{id}")]
         public async Task<ActionResult<object>>
-            UpdateBaseqatEmployee(string id, RegisterUserDto updateDto)
+            UpdateBaseqatEmployee(string id, UpdateBaseqatEmployeeDto updateDto)
         {
             if (updateDto == null)
                 return BadRequest(ApiBaseResponse<string>.Fail(ResponseMessages.InvalidData));
@@ -108,6 +114,17 @@ namespace Baseqt.API.Controllers
             if (!result.Succeeded)
                 return BadRequest(ApiBaseResponse<IEnumerable<string>>.Fail(
                     ResponseMessages.OperationFailed, result.Errors.Select(e => e.Description).ToArray()));
+
+            // If password is provided, reset it
+            if (!string.IsNullOrEmpty(updateDto.Password))
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var passResult = await _userManager.ResetPasswordAsync(user, token, updateDto.Password);
+
+                if (!passResult.Succeeded)
+                    return BadRequest(ApiBaseResponse<IEnumerable<string>>.Fail(
+                        "تم تحديث البيانات لكن فشل تغيير كلمة المرور", passResult.Errors.Select(e => e.Description).ToArray()));
+            }
 
             return Ok(ApiBaseResponse<object>.Success(new
             {

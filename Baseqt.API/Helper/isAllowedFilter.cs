@@ -1,4 +1,6 @@
-﻿using Baseqat.CORE.Helpers;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Baseqat.CORE.Helpers;
 using Baseqat.CORE.Response;
 using Baseqat.EF.DATA;
 using Microsoft.AspNetCore.Mvc;
@@ -43,11 +45,26 @@ namespace Baseqt.API.Helper
                 {
                     StatusCode = 401
                 };
+                return;
             }
-            var usr = await usersHelper.getUserInfobyName(user.Identity.Name);
+            // Try to find user by name first, then fallback to ID from JWT claims
+            Baseqat.EF.Models.Auth.ApplicationUser? usr = null;
+            var userName = user.Identity?.Name;
+            if (!string.IsNullOrEmpty(userName))
+                usr = await usersHelper.getUserInfobyName(userName);
+
             if (usr == null)
             {
+                var userId = user.FindFirstValue(ClaimTypes.NameIdentifier)
+                    ?? user.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                    ?? user.FindFirstValue("sub")
+                    ?? user.FindFirstValue("unique_name");
+                if (!string.IsNullOrEmpty(userId))
+                    usr = await usersHelper.getUserInfobyId(userId);
+            }
 
+            if (usr == null)
+            {
                 context.Result = new JsonResult(ApiBaseResponse<string>.Fail("access Denied.."))
                 {
                     StatusCode = 401

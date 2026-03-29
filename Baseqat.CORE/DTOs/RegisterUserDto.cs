@@ -14,7 +14,7 @@ namespace Baseqat.CORE.DTOs
         public string FullName { get; set; }
 
         [Required]
-        [RegularExpression(@"^05\d{8}$", ErrorMessage = "Phone number must be a valid Saudi number starting with 05.")]
+        [RegularExpression(@"^(05\d{8}|9665\d{8})$", ErrorMessage = "Phone number must be a valid Saudi number (05XXXXXXXX or 9665XXXXXXXX).")]
         public string PhoneNumber { get; set; }
 
         [Required]

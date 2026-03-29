@@ -111,10 +111,56 @@ namespace Baseqat.EF.DATA
                 .HasMaxLength(50);
 
             modelBuilder.Entity<Instructor>()
-                .Property(x => x.InfoUpdateRequestStatus)
+                .Property(x => x.RequestStatus)
                 .HasConversion<string>()
                 .HasMaxLength(50);
 
+            // Consultant configurations
+            modelBuilder.Entity<Consultant>()
+                .Property(x => x.RequestStatus)
+                .HasConversion<string>()
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<Consultant>()
+                .Property(x => x.HourlyRate)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<ConsultationRequest>()
+                .Property(x => x.Status)
+                .HasConversion<string>()
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<ConsultationRequest>()
+                .HasOne(cr => cr.Consultant)
+                .WithMany(c => c.ConsultationRequests)
+                .HasForeignKey(cr => cr.ConsultantId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ConsultationRequest>()
+                .HasOne(cr => cr.ConsultationCategory)
+                .WithMany()
+                .HasForeignKey(cr => cr.ConsultationCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ConsultationRequest>()
+                .HasOne(cr => cr.User)
+                .WithMany()
+                .HasForeignKey(cr => cr.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ConsultantConsultationCategory junction table
+            modelBuilder.Entity<ConsultantConsultationCategory>()
+                .HasOne(cc => cc.Consultant)
+                .WithMany(c => c.ConsultantCategories)
+                .HasForeignKey(cc => cc.ConsultantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ConsultantConsultationCategory>()
+                .HasOne(cc => cc.ConsultationCategory)
+                .WithMany(c => c.ConsultantCategories)
+                .HasForeignKey(cc => cc.ConsultationCategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
 
         }
 
@@ -144,5 +190,17 @@ namespace Baseqat.EF.DATA
         public DbSet<InstructorSkill> InstructorsSkill { get; set; }
         public DbSet<StudentReview> StudentReviews { get; set; }
         public DbSet<ContactRequest> ContactRequests { get; set; }
+        public DbSet<HomeStatistic> HomeStatistics { get; set; }
+        public DbSet<MediaCenter> MediaCenters { get; set; }
+
+        // Consultant Management
+        public DbSet<Consultant> Consultants { get; set; }
+        public DbSet<ConsultantSkill> ConsultantSkills { get; set; }
+        public DbSet<ConsultationRequest> ConsultationRequests { get; set; }
+        public DbSet<ConsultationCategory> ConsultationCategories { get; set; }
+        public DbSet<ConsultantConsultationCategory> ConsultantConsultationCategories { get; set; }
+
+        // Client Management
+        public DbSet<ClientProfile> ClientProfiles { get; set; }
     }
 }

@@ -29,6 +29,18 @@ namespace Baseqat.EF.DATA
         public IBaseRepository<InstructorSkill> InstructorSkill { get; private set; }
         public IBaseRepository<StudentReview> StudentReview { get; private set; }
         public IBaseRepository<ContactRequest> ContactRequest { get; private set; }
+        public IBaseRepository<HomeStatistic> HomeStatistic { get; private set; }
+        public IBaseRepository<MediaCenter> MediaCenter { get; private set; }
+
+        // Consultant Management
+        public IBaseRepository<Consultant> Consultant { get; private set; }
+        public IBaseRepository<ConsultantSkill> ConsultantSkill { get; private set; }
+        public IBaseRepository<ConsultationRequest> ConsultationRequest { get; private set; }
+        public IBaseRepository<ConsultationCategory> ConsultationCategory { get; private set; }
+        public IBaseRepository<ConsultantConsultationCategory> ConsultantConsultationCategory { get; private set; }
+
+        // Client Management
+        public IBaseRepository<ClientProfile> ClientProfile { get; private set; }
 
         public UnitOfWork(AppDbContext context)
         {
@@ -54,6 +66,18 @@ namespace Baseqat.EF.DATA
             InstructorSkill = new BaseRepository<InstructorSkill>(_context);
             StudentReview = new BaseRepository<StudentReview>(_context);
             ContactRequest = new BaseRepository<ContactRequest>(_context);
+            HomeStatistic = new BaseRepository<HomeStatistic>(_context);
+            MediaCenter = new BaseRepository<MediaCenter>(_context);
+
+            // Initialize consultant management repositories
+            Consultant = new BaseRepository<Consultant>(_context);
+            ConsultantSkill = new BaseRepository<ConsultantSkill>(_context);
+            ConsultationRequest = new BaseRepository<ConsultationRequest>(_context);
+            ConsultationCategory = new BaseRepository<ConsultationCategory>(_context);
+            ConsultantConsultationCategory = new BaseRepository<ConsultantConsultationCategory>(_context);
+
+            // Initialize client management repositories
+            ClientProfile = new BaseRepository<ClientProfile>(_context);
         }
 
         public UnitOfWork()

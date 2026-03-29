@@ -51,7 +51,8 @@ namespace Baseqt.API.Controllers
 
             Expression<Func<CourseSection, bool>> criteria = x =>
                 (filter.Id == null || filter.Id == 0 || x.Id == filter.Id) &&
-                (string.IsNullOrEmpty(filter.Title) || x.Title.Contains(filter.Title));
+                (string.IsNullOrEmpty(filter.Title) || x.Title.Contains(filter.Title)) &&
+                (filter.CourseId == null || filter.CourseId == 0 || x.CourseId == filter.CourseId);
 
             var totalCount = await _unitOfWork.CourseSection.CountAsync(criteria);
 
@@ -105,7 +106,8 @@ namespace Baseqt.API.Controllers
             var entity = new CourseSection
             {
                 Title = model.Title,
-                Order = model.Order
+                Order = model.Order,
+                CourseId = model.CourseId
             };
 
             await _unitOfWork.CourseSection.AddAsync(entity);

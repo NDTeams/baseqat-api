@@ -8,6 +8,9 @@ namespace Baseqat.EF.Models.Enums
     {
         Text,
         Video,
-        Audio
+        Audio,
+        Image,
+        Quiz,
+        Explanation
     }
 }

@@ -60,6 +60,7 @@ namespace Baseqt.API.Controllers
                 (filter.CourseCategoryId == null || x.CourseCategoryId == filter.CourseCategoryId) &&
                 (filter.InstructorId == null || x.InstructorId == filter.InstructorId) &&
                 (filter.IsActive == null || x.IsActive == filter.IsActive) &&
+                (filter.CourseType == null || x.CourseType == filter.CourseType) &&
                 (filter.MinPrice == null || x.Price >= filter.MinPrice) &&
                 (filter.MaxPrice == null || x.Price <= filter.MaxPrice) &&
                 (filter.StartDateFrom == null || x.StartDate >= filter.StartDateFrom) &&
@@ -130,6 +131,12 @@ namespace Baseqt.API.Controllers
                 TotalDurationInHours = model.TotalDurationInHours,
                 StartDate = model.StartDate,
                 EndDate = model.EndDate,
+                CourseType = model.CourseType,
+                Location = model.Location,
+                Latitude = model.Latitude,
+                Longitude = model.Longitude,
+                PlatformName = model.PlatformName,
+                PlatformUrl = model.PlatformUrl,
                 Status = model.Status,
                 IsActive = model.IsActive,
                 CourseCategoryId = model.CourseCategoryId,
@@ -229,6 +236,12 @@ namespace Baseqt.API.Controllers
             if (model.TotalDurationInHours.HasValue) entity.TotalDurationInHours = model.TotalDurationInHours.Value;
             if (model.StartDate.HasValue) entity.StartDate = model.StartDate;
             if (model.EndDate.HasValue) entity.EndDate = model.EndDate;
+            if (model.CourseType.HasValue) entity.CourseType = model.CourseType.Value;
+            if (model.Location != null) entity.Location = model.Location;
+            if (model.Latitude.HasValue) entity.Latitude = model.Latitude;
+            if (model.Longitude.HasValue) entity.Longitude = model.Longitude;
+            if (model.PlatformName != null) entity.PlatformName = model.PlatformName;
+            if (model.PlatformUrl != null) entity.PlatformUrl = model.PlatformUrl;
             if (model.Status.HasValue) entity.Status = model.Status.Value;
             if (model.IsActive.HasValue) entity.IsActive = model.IsActive.Value;
             if (model.CourseCategoryId.HasValue) entity.CourseCategoryId = model.CourseCategoryId.Value;
@@ -386,7 +399,158 @@ namespace Baseqt.API.Controllers
         }
         #endregion
 
+        #region Public: Get Active Courses
+        [HttpGet("GetActive")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetActive()
+        {
+            var result = await _unitOfWork.Course.FindAllAsync(
+                criteria: x => x.IsActive == true,
+                includes: new[] { "CourseCategory", "Instructor" }
+            );
+
+            if (result == null || !result.Any())
+                return Ok(ApiBaseResponse<string>.Success(null, ResponseMessages.NotFound));
+
+            var dtos = result.Select(MapToDto).ToList();
+            return Ok(ApiBaseResponse<List<CourseDto>>.Success(dtos, ResponseMessages.DataRetrieved));
+        }
+        #endregion
+
+        #region Public: Get Active Course Detail by ID
+        [HttpGet("GetActiveById/{id}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetActiveById(long id)
+        {
+            var entity = await _unitOfWork.Course.FindAsync(
+                x => x.Id == id && x.IsActive == true,
+                new[] { "CourseCategory", "Instructor", "Sections", "Sections.Lessons",
+                        "CourseInstructors", "CourseInstructors.Instructor",
+                        "Requirements", "Reviews", "Enrollments" }
+            );
+
+            if (entity == null)
+                return Ok(ApiBaseResponse<string>.Success(null, ResponseMessages.NotFound));
+
+            var dto = MapToDetailDto(entity);
+            return Ok(ApiBaseResponse<CourseDetailDto>.Success(dto, ResponseMessages.DataRetrieved));
+        }
+        #endregion
+
+        #region Public: Get Course Stats
+        [HttpGet("GetCourseStats")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetCourseStats()
+        {
+            var totalCategories = await _unitOfWork.CourseCategory.CountAsync(x => x.IsActive);
+            var totalCourses = await _unitOfWork.Course.CountAsync(x => x.IsActive);
+            var totalEnrollments = await _unitOfWork.CourseEnrollment.CountAsync(x => true);
+
+            var dto = new CourseStatsDto
+            {
+                TotalCategories = totalCategories,
+                TotalCourses = totalCourses,
+                TotalEnrollments = totalEnrollments
+            };
+
+            return Ok(ApiBaseResponse<CourseStatsDto>.Success(dto, ResponseMessages.DataRetrieved));
+        }
+        #endregion
+
         #region Helper Methods
+        private CourseDetailDto MapToDetailDto(Course entity)
+        {
+            var dto = new CourseDetailDto
+            {
+                Id = entity.Id,
+                Title = entity.Title,
+                Subtitle = entity.Subtitle,
+                Description = entity.Description,
+                ThumbnailUrl = entity.ThumbnailUrl,
+                PromoVideoUrl = entity.PromoVideoUrl,
+                Level = entity.Level,
+                LevelName = entity.Level.ToString(),
+                Language = entity.Language,
+                HasCertificate = entity.HasCertificate,
+                Price = entity.Price,
+                CourseDays = entity.CourseDays,
+                CourseDaysName = entity.CourseDays.ToString(),
+                StartTime = entity.StartTime,
+                EndTime = entity.EndTime,
+                DurationInDays = entity.DurationInDays,
+                TotalDurationInHours = entity.TotalDurationInHours,
+                StartDate = DateHelper.ToHijri(entity.StartDate),
+                EndDate = DateHelper.ToHijri(entity.EndDate),
+                CourseType = entity.CourseType,
+                CourseTypeName = entity.CourseType.ToString(),
+                Location = entity.Location,
+                Latitude = entity.Latitude,
+                Longitude = entity.Longitude,
+                PlatformName = entity.PlatformName,
+                PlatformUrl = entity.PlatformUrl,
+                Status = entity.Status,
+                StatusName = entity.Status.ToString(),
+                IsActive = entity.IsActive,
+                CourseCategoryId = entity.CourseCategoryId,
+                CourseCategoryName = entity.CourseCategory?.Name ?? string.Empty,
+                InstructorId = entity.InstructorId,
+                InstructorName = entity.Instructor?.Name ?? string.Empty,
+
+                Sections = entity.Sections?.OrderBy(s => s.Order).Select(s => new CourseSectionDto
+                {
+                    Id = s.Id,
+                    Title = s.Title,
+                    Order = s.Order,
+                    Lessons = s.Lessons?.OrderBy(l => l.Order).Select(l => new CourseLessonDto
+                    {
+                        Id = l.Id,
+                        Title = l.Title,
+                        LessonType = l.LessonType,
+                        LessonTypeName = l.LessonType.ToString(),
+                        DurationInMinutes = l.DurationInMinutes,
+                        IsPreview = l.IsPreview,
+                        Order = l.Order,
+                        CourseSectionId = l.CourseSectionId
+                    }).ToList() ?? new List<CourseLessonDto>()
+                }).ToList() ?? new List<CourseSectionDto>(),
+
+                Instructors = entity.CourseInstructors?.Select(ci => new CourseInstructorDto
+                {
+                    CourseId = ci.CourseId,
+                    InstructorId = ci.InstructorId,
+                    InstructorName = ci.Instructor?.Name ?? string.Empty,
+                    InstructorTitle = ci.Instructor?.Title ?? string.Empty,
+                    InstructorAvatarUrl = ci.Instructor?.AvatarUrl
+                }).ToList() ?? new List<CourseInstructorDto>(),
+
+                Requirements = entity.Requirements?.OrderBy(r => r.Order).Select(r => new CourseRequirementDto
+                {
+                    Id = r.Id,
+                    Text = r.Text,
+                    Order = r.Order,
+                    CourseId = r.CourseId
+                }).ToList() ?? new List<CourseRequirementDto>(),
+
+                Reviews = entity.Reviews?.Select(r => new CourseReviewDto
+                {
+                    Id = r.Id,
+                    CourseId = r.CourseId,
+                    CourseTitle = entity.Title,
+                    UserId = r.UserId,
+                    UserName = string.Empty,
+                    Rating = r.Rating,
+                    Comment = r.Comment
+                }).ToList() ?? new List<CourseReviewDto>(),
+
+                EnrollmentCount = entity.Enrollments?.Count ?? 0,
+                AverageRating = entity.Reviews != null && entity.Reviews.Any()
+                    ? Math.Round(entity.Reviews.Average(r => r.Rating), 1) : 0,
+                TotalReviews = entity.Reviews?.Count ?? 0
+            };
+
+            return dto;
+        }
+
         private CourseDto MapToDto(Course entity)
         {
             return new CourseDto
@@ -410,6 +574,13 @@ namespace Baseqt.API.Controllers
                 TotalDurationInHours = entity.TotalDurationInHours,
                 StartDate = DateHelper.ToHijri(entity.StartDate),
                 EndDate = DateHelper.ToHijri(entity.EndDate),
+                CourseType = entity.CourseType,
+                CourseTypeName = entity.CourseType.ToString(),
+                Location = entity.Location,
+                Latitude = entity.Latitude,
+                Longitude = entity.Longitude,
+                PlatformName = entity.PlatformName,
+                PlatformUrl = entity.PlatformUrl,
                 Status = entity.Status,
                 StatusName = entity.Status.ToString(),
                 IsActive = entity.IsActive,

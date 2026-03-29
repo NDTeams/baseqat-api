@@ -21,6 +21,12 @@ namespace Baseqat.CORE.DTOs
         public int TotalDurationInHours { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+        public CourseType CourseType { get; set; }
+        public string? Location { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+        public string? PlatformName { get; set; }
+        public string? PlatformUrl { get; set; }
         public CourseStatus Status { get; set; }
         public bool IsActive { get; set; } = true;
         [Required]
@@ -47,6 +53,12 @@ namespace Baseqat.CORE.DTOs
         public int? TotalDurationInHours { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+        public CourseType? CourseType { get; set; }
+        public string? Location { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+        public string? PlatformName { get; set; }
+        public string? PlatformUrl { get; set; }
         public CourseStatus? Status { get; set; }
         public bool? IsActive { get; set; }
         public long? CourseCategoryId { get; set; }
@@ -76,6 +88,13 @@ namespace Baseqat.CORE.DTOs
         public int TotalDurationInHours { get; set; }
         public string? StartDate { get; set; }
         public string? EndDate { get; set; }
+        public CourseType CourseType { get; set; }
+        public string CourseTypeName { get; set; } = string.Empty;
+        public string? Location { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+        public string? PlatformName { get; set; }
+        public string? PlatformUrl { get; set; }
         public CourseStatus Status { get; set; }
         public string StatusName { get; set; } = string.Empty;
         public bool IsActive { get; set; }
@@ -91,6 +110,20 @@ namespace Baseqat.CORE.DTOs
     {
         public List<CourseSectionDto> Sections { get; set; } = new();
         public List<CourseInstructorDto> Instructors { get; set; } = new();
+        public List<CourseRequirementDto> Requirements { get; set; } = new();
+        public List<CourseReviewDto> Reviews { get; set; } = new();
+        public int EnrollmentCount { get; set; }
+        public double AverageRating { get; set; }
+        public int TotalReviews { get; set; }
+    }
+    #endregion
+
+    #region Stats DTO
+    public class CourseStatsDto
+    {
+        public int TotalCategories { get; set; }
+        public int TotalCourses { get; set; }
+        public int TotalEnrollments { get; set; }
     }
     #endregion
 
@@ -104,6 +137,7 @@ namespace Baseqat.CORE.DTOs
         public long? CourseCategoryId { get; set; }
         public long? InstructorId { get; set; }
         public bool? IsActive { get; set; }
+        public CourseType? CourseType { get; set; }
         public decimal? MinPrice { get; set; }
         public decimal? MaxPrice { get; set; }
         public DateTime? StartDateFrom { get; set; }

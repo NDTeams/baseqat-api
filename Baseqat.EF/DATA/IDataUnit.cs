@@ -32,6 +32,18 @@ namespace Baseqat.EF.DATA
         IBaseRepository<InstructorSkill> InstructorSkill { get; }
         IBaseRepository<StudentReview> StudentReview { get; }
         IBaseRepository<ContactRequest> ContactRequest { get; }
+        IBaseRepository<HomeStatistic> HomeStatistic { get; }
+        IBaseRepository<MediaCenter> MediaCenter { get; }
+
+        // Consultant Management
+        IBaseRepository<Consultant> Consultant { get; }
+        IBaseRepository<ConsultantSkill> ConsultantSkill { get; }
+        IBaseRepository<ConsultationRequest> ConsultationRequest { get; }
+        IBaseRepository<ConsultationCategory> ConsultationCategory { get; }
+        IBaseRepository<ConsultantConsultationCategory> ConsultantConsultationCategory { get; }
+
+        // Client Management
+        IBaseRepository<ClientProfile> ClientProfile { get; }
 
         int Complete();
         Task<int> CompleteAsync();

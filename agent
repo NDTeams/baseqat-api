@@ -1,0 +1,51 @@
+# Baseqat Platform - Agent Instructions
+
+## Project Structure
+- **Backend**: .NET 10 Web API (`d:\ND\app\Baseqt\`)
+  - `Baseqt.API/` — Controllers, Program.cs, wwwroot/uploads
+  - `Baseqat.CORE/` — DTOs, Helpers (EmailTemplates, DateHelper), Services (IEmailService), Response types
+  - `Baseqat.EF/` — Models, Enums, Repositories (BaseRepository), DATA (UnitOfWork, IDataUnit), Migrations
+- **Frontend**: Next.js App Router + TypeScript (`d:\2026\baseqat\app\Basqat-main\`)
+  - `app/(dashboard)/` — Admin dashboard pages
+  - `app/(site)/` — Public site pages
+  - `app/(auth)/` — Login/Register
+  - `app/client-dashboard/` — Client dashboard
+  - `app/api/[...path]/route.ts` — API proxy to backend
+  - `services/` — Service layers (axios calls)
+  - `components/` — Shared components (dashboard/, site/, client-dashboard/)
+  - `lib/axios.ts` — Axios instance with interceptor (auth_token cookie)
+
+## Architecture & Patterns
+- **Backend**: Repository + Unit of Work pattern via `IDataUnit`
+- **Response wrappers**: `ApiBaseResponse<T>` and `PagedResponse<T>`
+  - `ApiBaseResponse` constructors are **protected** — use `Success()` / `Fail()` static methods
+  - `Fail()` signature: `Fail(string message, string[] errors = null)` — cannot pass data
+- **Auth**: JWT with `auth_token` cookie, `[Authorize]` attribute, custom `[isAllowed]` filter
+- **Frontend proxy**: `/api/[...path]/route.ts` forwards to `http://localhost:5139`
+
+## Key Conventions
+- **UI**: Arabic RTL, Tailwind CSS, FontAwesome icons, font-cairo
+- **Z-index**: Header z-[1000], Modals z-[1100]+, Toasts z-[1200]
+- **Dates**: `DateHelper.ToHijri()` for Hijri date conversion
+- **Email**: `IEmailService.SendEmailAsync(List<string> toEmails, string subject, string body)`
+- **FindAllAsync overloads**:
+  1. `(criteria)` — simple
+  2. `(criteria, skip, take)` — paginated
+  3. `(criteria, skip?, take?, orderBy, direction, includes)` — full
+
+## Ports
+- Backend API: `http://localhost:5139`
+- Frontend: `http://localhost:3001`
+
+## Key Enums
+- **ConsultationRequestStatus**: PendingAssignment(0), New(1), InProgress(2), Approved(3), Completed(4), Cancelled(5)
+- **CourseStatus**: Draft(1), Published(2), Archived(3)
+- **CourseLevel**: Beginner(1), Intermediate(2), Advanced(3)
+- **CourseType**: InPerson(0), Online(1), Hybrid(2)
+- **LessonType**: Text(0), Video(1), Audio(2), Image(3), Quiz(4), Explanation(5)
+
+## Important Notes
+- Must `taskkill //F //IM "Baseqt.API.exe"` before building (DLL lock)
+- Use `nohup` for background process stability on Windows bash
+- `IEmailService.SendEmailAsync` takes `List<string>` not single string
+- Frontend uses `getFileUrl()` from `lib/config` for image URLs

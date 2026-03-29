@@ -7,6 +7,8 @@ namespace Baseqat.EF.Models
     public class InstructorSkill
     {
         public long Id { get; set; }
+        public long? InstructorId { get; set; }
+        public Instructor? Instructor { get; set; }
         public string Name { get; set; } = string.Empty; // مثال: "تصميم تجربة المستخدم"
     }
 
