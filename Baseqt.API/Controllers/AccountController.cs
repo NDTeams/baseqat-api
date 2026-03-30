@@ -96,5 +96,16 @@ namespace Baseqt.API.Controllers
             return Ok(result);
         }
 
+        [HttpPost("logout")]
+        public async Task<ActionResult<ApiBaseResponse<bool>>> Logout()
+        {
+            // الحصول على التوكن من الهيدر
+            var authHeader = Request.Headers["Authorization"].ToString();
+            var token = authHeader.Replace("Bearer ", "");
+
+            var result = await _authServices.Logout(token);
+            return Ok(result);
+        }
+
     }
 }

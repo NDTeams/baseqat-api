@@ -285,5 +285,23 @@ namespace Baseqat.CORE.Services
 
             return ApiBaseResponse<bool>.Success(true, ResponseMessages.PasswordResetSuccess);
         }
+
+        public async Task<ApiBaseResponse<bool>> Logout(string token)
+        {
+            try
+            {
+                // تسجيل الخروج من SignInManager
+                await _signInManager.SignOutAsync();
+
+                // في المستقبل، يمكن إضافة التوكن إلى Blacklist هنا
+                // await _tokenService.RevokeToken(token);
+
+                return ApiBaseResponse<bool>.Success(true, "تم تسجيل الخروج بنجاح");
+            }
+            catch (Exception ex)
+            {
+                return ApiBaseResponse<bool>.Fail($"حدث خطأ أثناء تسجيل الخروج: {ex.Message}");
+            }
+        }
     }
 }

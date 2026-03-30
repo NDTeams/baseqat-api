@@ -21,6 +21,7 @@ namespace Baseqat.CORE.Services
 
         Task<ApiBaseResponse<bool>> ResetPassword(ResetPasswordDto model);
 
+        Task<ApiBaseResponse<bool>> Logout(string token);
 
     }
 }
