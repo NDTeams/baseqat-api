@@ -135,3 +135,215 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3001
 | Admin Pages | `d:\2026\baseqat\app\Basqat-main\app\(dashboard)\` |
 | Public Pages | `d:\2026\baseqat\app\Basqat-main\app\(site)\` |
 | Components | `d:\2026\baseqat\app\Basqat-main\components\` |
+
+## Recent Updates (March 2026)
+
+### Complete Logout System Implementation
+
+#### Backend Changes
+```bash
+# Files Modified
+- Baseqat.CORE/Services/IAuthServices.cs
+- Baseqat.CORE/Services/AuthServices.cs
+- Baseqt.API/Controllers/AccountController.cs
+
+# New Endpoint
+POST /api/Account/logout
+Authorization: Bearer {token}
+```
+
+**Implementation Details:**
+```csharp
+// IAuthServices.cs
+Task<ApiBaseResponse<bool>> Logout(string token);
+
+// AuthServices.cs
+public async Task<ApiBaseResponse<bool>> Logout(string token)
+{
+    await _signInManager.SignOutAsync();
+    // Future: Add token to blacklist
+    return ApiBaseResponse<bool>.Success(true, "تم تسجيل الخروج بنجاح");
+}
+
+// AccountController.cs
+[HttpPost("logout")]
+public async Task<ActionResult<ApiBaseResponse<bool>>> Logout()
+{
+    var authHeader = Request.Headers["Authorization"].ToString();
+    var token = authHeader.Replace("Bearer ", "");
+    var result = await _authServices.Logout(token);
+    return Ok(result);
+}
+```
+
+#### Frontend Changes
+```bash
+# Files Modified
+- services/auth/auth.service.ts
+- components/site/header.tsx
+- components/dashboard/header.tsx
+- components/student-dashboard/mobile-bottom-nav.tsx
+- components/client-dashboard/mobile-bottom-nav.tsx
+- components/client-dashboard/sidebar.tsx
+```
+
+**Enhanced Logout Flow:**
+```typescript
+// auth.service.ts
+async logout(): Promise<void> {
+  try {
+    // 1. Send logout request to backend
+    const token = Cookies.get("auth_token");
+    if (token) {
+      await api.post("/auth/logout", {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    }
+  } catch (error) {
+    console.error("Logout error:", error);
+  } finally {
+    // 2. Clear all storage
+    Cookies.remove("auth_token", { path: "/" });
+    Cookies.remove("auth_token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("token");
+    sessionStorage.clear();
+
+    // 3. Force full page reload
+    window.location.href = "/login";
+  }
+}
+```
+
+### Hero Section Redesign
+
+#### Changes Made
+```bash
+# Files Modified
+- components/site/hero.tsx
+- public/site/slide1.png (added)
+- public/site/basqat.ico (added)
+- app/favicon.ico (updated)
+```
+
+**Design Improvements:**
+- **Font Sizes:** Reduced from 7xl to 5xl (h1), 5xl to 3xl (h2), 2xl to lg (description)
+- **Image Dimensions:** Fixed max-w-lg, h-300px with proper centering
+- **Padding:** Added pt-[75px] to prevent header overlap
+- **Pattern:** Replaced plus (+) pattern with subtle dots
+- **Colors:** Unified emerald gradient across all slides
+- **Removed:** A+ quality badge for cleaner design
+
+### Authentication & Access Control
+
+#### Route Changes
+```bash
+# Changed /dashboard to /index throughout the app
+- Updated middleware.ts for role-based access
+- Updated all navigation links and redirects
+- Added support for roles: admin, BASEQATEMPLOYEE, SUPERADMIN
+```
+
+#### Header Improvements
+```typescript
+// When NOT logged in: Show login + register buttons
+<Link href="/register">التسجيل</Link>
+<Link href="/login">تسجيل الدخول</Link>
+
+// When logged in: Show user icon dropdown
+<button onClick={userMenu}>
+  <FontAwesomeIcon icon={faUser} />
+</button>
+```
+
+#### Debug Tools
+```bash
+# New debug page for JWT troubleshooting
+/debug-token
+
+# Displays:
+- Token payload
+- All token keys
+- Role information
+- Allowed admin roles
+```
+
+### Testing Logout Flow
+
+```bash
+# 1. Login
+curl -X POST http://localhost:5139/api/Account/LoginByEmail \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123"}'
+
+# 2. Get token from response
+TOKEN="eyJhbGc..."
+
+# 3. Test logout
+curl -X POST http://localhost:5139/api/Account/logout \
+  -H "Authorization: Bearer $TOKEN"
+
+# Expected Response:
+{
+  "succeeded": true,
+  "message": "تم تسجيل الخروج بنجاح",
+  "data": true
+}
+```
+
+### Git Commits
+
+#### Frontend
+```bash
+cd "d:\2026\baseqat\app\Basqat-main"
+git add .
+git commit -m "feat: Enhance hero section, implement complete logout system, and improve auth flow"
+git push
+```
+
+#### Backend
+```bash
+cd "D:\ND\app\Baseqt"
+git add Baseqat.CORE/Services/ Baseqt.API/Controllers/AccountController.cs
+git commit -m "feat: Add logout endpoint with token revocation support"
+git push
+```
+
+### Future Enhancements
+
+**Token Blacklist (Optional):**
+```csharp
+// 1. Create RevokedTokens table in database
+public class RevokedToken
+{
+    public int Id { get; set; }
+    public string Token { get; set; }
+    public DateTime RevokedAt { get; set; }
+    public DateTime ExpiresAt { get; set; }
+}
+
+// 2. Add to ITokenService
+Task RevokeToken(string token);
+Task<bool> IsTokenRevoked(string token);
+
+// 3. Check in JWT middleware
+if (await _tokenService.IsTokenRevoked(token))
+{
+    context.Result = new UnauthorizedResult();
+    return;
+}
+```
+
+### Key Files Reference
+
+| Feature | Frontend File | Backend File |
+|---------|--------------|--------------|
+| Logout Service | `services/auth/auth.service.ts` | `Baseqat.CORE/Services/AuthServices.cs` |
+| Logout Interface | - | `Baseqat.CORE/Services/IAuthServices.cs` |
+| Logout Endpoint | - | `Baseqt.API/Controllers/AccountController.cs` |
+| Hero Design | `components/site/hero.tsx` | - |
+| Site Header | `components/site/header.tsx` | - |
+| Dashboard Header | `components/dashboard/header.tsx` | - |
+| Middleware | `middleware.ts` | - |
+| Debug Page | `app/debug-token/page.tsx` | - |
