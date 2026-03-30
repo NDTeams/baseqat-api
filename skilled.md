@@ -310,29 +310,43 @@ git commit -m "feat: Add logout endpoint with token revocation support"
 git push
 ```
 
-### Future Enhancements
+### Token Blacklist Implementation (March 30, 2026)
 
-**Token Blacklist (Optional):**
+**Database Migration:**
+```bash
+cd "D:\ND\app\Baseqt"
+
+# Kill API process before migration (if running)
+taskkill //F //IM "Baseqt.API.exe"
+
+# Create migration
+dotnet ef migrations add AddRevokedTokensTable --project Baseqat.EF --startup-project Baseqt.API
+
+# Apply to database
+dotnet ef database update --project Baseqat.EF --startup-project Baseqt.API
+```
+
+**Complete Implementation:**
 ```csharp
-// 1. Create RevokedTokens table in database
+// RevokedToken model (Baseqat.EF/Models/Auth/RevokedToken.cs)
 public class RevokedToken
 {
     public int Id { get; set; }
-    public string Token { get; set; }
-    public DateTime RevokedAt { get; set; }
-    public DateTime ExpiresAt { get; set; }
+    [Required] [MaxLength(2000)] public string Token { get; set; }
+    [Required] [MaxLength(450)] public string UserId { get; set; }
+    [Required] public DateTime RevokedAt { get; set; }
+    [Required] public DateTime ExpiresAt { get; set; }
+    [MaxLength(50)] public string? RevokedFrom { get; set; }
+    public virtual ApplicationUser User { get; set; }
 }
 
-// 2. Add to ITokenService
-Task RevokeToken(string token);
-Task<bool> IsTokenRevoked(string token);
+// ITokenService methods
+Task<bool> RevokeTokenAsync(string token, string userId, string? revokedFrom = null);
+Task<bool> IsTokenRevokedAsync(string token);
+Task<int> CleanupExpiredTokensAsync();
 
-// 3. Check in JWT middleware
-if (await _tokenService.IsTokenRevoked(token))
-{
-    context.Result = new UnauthorizedResult();
-    return;
-}
+// JwtBlacklistMiddleware checks all requests
+// Returns 401 if token is in blacklist
 ```
 
 ### Key Files Reference
@@ -342,6 +356,9 @@ if (await _tokenService.IsTokenRevoked(token))
 | Logout Service | `services/auth/auth.service.ts` | `Baseqat.CORE/Services/AuthServices.cs` |
 | Logout Interface | - | `Baseqat.CORE/Services/IAuthServices.cs` |
 | Logout Endpoint | - | `Baseqt.API/Controllers/AccountController.cs` |
+| Token Blacklist Model | - | `Baseqat.EF/Models/Auth/RevokedToken.cs` |
+| Token Service | - | `Baseqat.CORE/Services/TokenService.cs` |
+| Blacklist Middleware | - | `Baseqt.API/Middleware/JwtBlacklistMiddleware.cs` |
 | Hero Design | `components/site/hero.tsx` | - |
 | Site Header | `components/site/header.tsx` | - |
 | Dashboard Header | `components/dashboard/header.tsx` | - |
