@@ -51,7 +51,27 @@ namespace Baseqat.CORE.Services
         /// <returns>A tuple containing user ID and identity token, or null values if invalid.</returns>
         Task<(string? userId, string? identityToken)> DecodeEmailPayloadTokenAsync(string token);
 
+        /// <summary>
+        /// Revokes a JWT token by adding it to the blacklist.
+        /// </summary>
+        /// <param name="token">JWT token to revoke.</param>
+        /// <param name="userId">User ID associated with the token.</param>
+        /// <param name="revokedFrom">IP address or device identifier.</param>
+        /// <returns>True if revoked successfully, false otherwise.</returns>
+        Task<bool> RevokeTokenAsync(string token, string userId, string? revokedFrom = null);
 
+        /// <summary>
+        /// Checks if a JWT token has been revoked.
+        /// </summary>
+        /// <param name="token">JWT token to check.</param>
+        /// <returns>True if token is revoked, false otherwise.</returns>
+        Task<bool> IsTokenRevokedAsync(string token);
+
+        /// <summary>
+        /// Cleans up expired revoked tokens from the database.
+        /// </summary>
+        /// <returns>Number of tokens removed.</returns>
+        Task<int> CleanupExpiredTokensAsync();
 
     }
 }

@@ -144,6 +144,9 @@ app.UseCors("AllowAll");
 
 app.UseAuthentication();
 
+// JWT Blacklist Middleware - يجب أن يكون بعد Authentication وقبل Authorization
+app.UseMiddleware<Baseqt.API.Middleware.JwtBlacklistMiddleware>();
+
 app.UseAuthorization();
 
 app.MapControllers();

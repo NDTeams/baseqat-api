@@ -290,11 +290,21 @@ namespace Baseqat.CORE.Services
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(token))
+                    return ApiBaseResponse<bool>.Fail("التوكن غير صالح");
+
+                // استخراج User ID من التوكن
+                var userId = await _tokenService.GetUserIdByTokenAsync(token);
+                if (string.IsNullOrWhiteSpace(userId))
+                    return ApiBaseResponse<bool>.Fail("فشل التحقق من التوكن");
+
+                // إضافة التوكن إلى Blacklist
+                var revoked = await _tokenService.RevokeTokenAsync(token, userId);
+                if (!revoked)
+                    return ApiBaseResponse<bool>.Fail("فشل إلغاء التوكن");
+
                 // تسجيل الخروج من SignInManager
                 await _signInManager.SignOutAsync();
-
-                // في المستقبل، يمكن إضافة التوكن إلى Blacklist هنا
-                // await _tokenService.RevokeToken(token);
 
                 return ApiBaseResponse<bool>.Success(true, "تم تسجيل الخروج بنجاح");
             }

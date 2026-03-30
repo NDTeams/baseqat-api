@@ -177,6 +177,9 @@ namespace Baseqat.EF.DATA
         public DbSet<Privileges_RoleBased> Privileges_RoleBased { get; set; }
         public DbSet<Privileges_UserBased> Privileges_UserBased { get; set; }
 
+        // Auth & Security
+        public DbSet<RevokedToken> RevokedTokens { get; set; }
+
         public DbSet<CourseCategory> CoursesCategory { get; set; }
         public DbSet<Course> Courses { get; set; }
         
